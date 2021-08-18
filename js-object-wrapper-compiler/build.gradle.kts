@@ -23,7 +23,7 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib"))
     implementation("com.google.devtools.ksp:symbol-processing-api:1.5.21-1.0.0-beta07")
-    implementation(project(rootProject.path))
+    implementation(project(":js-object-wrapper-array"))
     implementation(project(":js-object-wrapper-annotation"))
 
 }
