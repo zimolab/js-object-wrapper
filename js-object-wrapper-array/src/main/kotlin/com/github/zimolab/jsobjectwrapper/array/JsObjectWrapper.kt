@@ -1,4 +1,4 @@
-package com.github.zimolab.jsobjectwrapper.interfaces
+package com.github.zimolab.jsobjectwrapper.array
 
 import netscape.javascript.JSObject
 

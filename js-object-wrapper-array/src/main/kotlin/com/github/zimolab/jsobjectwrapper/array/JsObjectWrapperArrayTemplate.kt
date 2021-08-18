@@ -1,4 +1,4 @@
-package com.github.zimolab.jsobjectwrapper.interfaces
+package com.github.zimolab.jsobjectwrapper.array
 
 import com.github.zimolab.jsarray.*
 import com.github.zimolab.jsarray.base.*
