@@ -197,7 +197,6 @@ fun Sequence<KSAnnotation>.findAnnotations(annotationType: KClass<out Annotation
 
 fun Logger.error(msg: String) {
     this.log(Level.SEVERE, msg)
-
 }
 
 fun Logger.debug(msg: String) {

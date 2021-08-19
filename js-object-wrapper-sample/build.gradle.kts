@@ -21,6 +21,7 @@ dependencies {
     implementation(kotlin("stdlib"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.6.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    implementation(project(":js-object-wrapper-array"))
     implementation(project(":js-object-wrapper-annotation"))
     implementation(project(":js-object-wrapper-compiler"))
     ksp(project(":js-object-wrapper-compiler"))
