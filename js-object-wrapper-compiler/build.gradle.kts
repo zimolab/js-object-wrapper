@@ -24,9 +24,9 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib"))
     implementation("com.google.devtools.ksp:$kspVersion")
+    implementation("com.squareup:kotlinpoet:1.9.0")
     implementation(project(":js-object-wrapper-array"))
     implementation(project(":js-object-wrapper-annotation"))
-
 }
 
 java {

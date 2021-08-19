@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "1.5.20"
+    kotlin("jvm") version "1.5.21"
     java
     `java-library`
     `maven-publish`
@@ -7,7 +7,7 @@ plugins {
 
 buildscript {
     dependencies {
-        classpath(kotlin("gradle-plugin", version = "1.5.20"))
+        classpath(kotlin("gradle-plugin", version = "1.5.21"))
     }
 }
 
