@@ -5,7 +5,6 @@ import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperFunction
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.compiler.*
 import com.github.zimolab.jow.compiler.asTypeName
-import com.github.zimolab.jsobjectwrapper.compiler.*
 import com.github.zimolab.jow.compiler.resolver.ArgumentsResolver
 import com.github.zimolab.jow.compiler.resolver.TypeUtils
 import com.google.devtools.ksp.processing.CodeGenerator
