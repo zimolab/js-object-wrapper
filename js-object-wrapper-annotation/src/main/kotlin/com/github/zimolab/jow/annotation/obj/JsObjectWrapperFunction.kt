@@ -11,7 +11,7 @@ package com.github.zimolab.jow.annotation.obj
  * @property returnTypeCastor String 当返回值类型为非本地类型（Int、Boolean、Double、String、JSObject）时使用的类型转换函数名称。默认为None，代表自动生成一个名称。
  * @constructor
  */
-@Target(AnnotationTarget.FUNCTION) annotation class JsObjectFunction(
+@Target(AnnotationTarget.FUNCTION) annotation class JsObjectWrapperFunction(
     val jsMemberName: String = "",
     val skip: Boolean = SKIP,
     val undefinedAsNull: Boolean = UNDEFINED_AS_NULL,

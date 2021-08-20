@@ -7,6 +7,7 @@ import com.github.zimolab.jow.compiler.debug
 import java.util.*
 import java.util.logging.Logger
 
+@ExperimentalUnsignedTypes
 object ArgumentsResolver {
     fun resolve(arguments: List<ResolvedJsObjectWrapperFunction.FunctionParameter>): MutableList<String> {
         val argumentList = mutableListOf<String>()

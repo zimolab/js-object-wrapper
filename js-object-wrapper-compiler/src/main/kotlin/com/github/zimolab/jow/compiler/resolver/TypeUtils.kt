@@ -71,6 +71,7 @@ object TypeUtils {
         }
     }
 
+    @ExperimentalUnsignedTypes
     fun hasToTypedArrayFunction(type: KSType): Boolean {
         return type.qualifiedName in TYPES_WITH_TO_TYPED_ARRAY_FUNC
     }

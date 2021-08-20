@@ -1,28 +1,28 @@
 package com.github.zimolab.jow.sample
 
+import com.github.zimolab.jow.annotation.obj.JsObjectWrapperClass
 import com.github.zimolab.jsarray.base.JsArray
 import com.github.zimolab.jsarray.base.JsArrayInterface
-import com.github.zimolab.jow.annotation.obj.JsObjectFunction
-import com.github.zimolab.jow.annotation.obj.JsObjectInterface
+import com.github.zimolab.jow.annotation.obj.JsObjectWrapperFunction
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.array.JsObjectWrapperArray
 import netscape.javascript.JSObject
 import java.security.Key
 import java.util.*
 
-@JsObjectInterface
+@JsObjectWrapperClass
 interface JsDate: JsObjectWrapper {
 
     /** Returns a String representation of a date. The format of the String depends on the locale. */
     override fun toString(): String
 
-    @JsObjectFunction(undefinedAsNull = false, raiseExceptionOnUndefined = true)
+    @JsObjectWrapperFunction(undefinedAsNull = false, raiseExceptionOnUndefined = true)
     /** Returns a date as a String value. */
     fun toDateString(): String
 
-    @JsObjectFunction(undefinedAsNull = true)
+    @JsObjectWrapperFunction(undefinedAsNull = true)
     fun test1(): Unit
-    @JsObjectFunction(returnTypeCastor = "__asJsDate__")
+    @JsObjectWrapperFunction(returnTypeCastor = "__asJsDate__")
     fun test2(a: JsDateTime, b: JsDateTimeImp, c: Any, d: JsDate, vararg dates: JsDate): JsDateTimeImp
     fun test3(a: Int, b: JSObject?, c: Any, d: JsDate?, vararg dates: JsDate?)
     fun test4(a: Int, b: JsArray<Any?>, d: JsObjectWrapperArray<JsDate>?, vararg dates: Int)
@@ -35,6 +35,13 @@ interface JsDate: JsObjectWrapper {
     fun test11(vararg dates: List<Double>)
     fun test12(vararg dates: Map<Key, Double>): JsArrayInterface<JsDateTimeImp?>
     fun test13(vararg dates: Collection<Any?>)
+
+    // 暂时不支持函数泛型的解析和代码，以下代码将报错
+    //fun <R> test14(vararg dates: Collection<Any?>)
+
+    // 如果确实需要声明泛型函数，可以使用skip参数跳过解析，然后在子类中手动实现该函数
+    @JsObjectWrapperFunction(skip = true)
+    fun <R> test15(): R?
 
     /** Returns a time as a String value. */
     fun toTimeString(): String

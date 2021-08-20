@@ -1,6 +1,6 @@
 package com.github.zimolab.jow.compiler.resolver;
 
-import com.github.zimolab.jow.annotation.obj.JsObjectInterface
+import com.github.zimolab.jow.annotation.obj.JsObjectWrapperClass
 import com.github.zimolab.jow.compiler.findArgument
 import com.github.zimolab.jow.compiler.packageNameStr
 import com.github.zimolab.jow.compiler.qualifiedNameStr
@@ -42,7 +42,7 @@ class JsObjectWrapperClassResolver(
     }
 
     fun resolveOutputClassName(): String {
-        return resolveAnnotationArgument(JsObjectInterface::outputClassName.name, "").ifEmpty {
+        return resolveAnnotationArgument(JsObjectWrapperClass::outputClassName.name, "").ifEmpty {
             if (KEY_OUTPUT_CLASS_PREFIX in options || KEY_OUTPUT_CLASS_SUFFIX in options) {
                 val prefix = options[KEY_OUTPUT_CLASS_PREFIX]?.let {
                     it.ifEmpty { DEFAULT_OUTPUT_CLASS_PREFIX }
@@ -60,16 +60,16 @@ class JsObjectWrapperClassResolver(
 
     fun resolveOutputFilename(): String {
         val filename = resolveOutputClassName()
-        return resolveAnnotationArgument(JsObjectInterface::outputFilename.name, filename).ifEmpty {
+        return resolveAnnotationArgument(JsObjectWrapperClass::outputFilename.name, filename).ifEmpty {
             filename
         }
     }
 
     fun resolveOutputFileEncoding(): String {
         return resolveAnnotationArgument(
-            JsObjectInterface::outputFileEncoding.name,
-            JsObjectInterface.DEFAULT_OUTPUT_ENCODING
-        ).ifEmpty { JsObjectInterface.DEFAULT_OUTPUT_ENCODING }
+            JsObjectWrapperClass::outputFileEncoding.name,
+            JsObjectWrapperClass.DEFAULT_OUTPUT_ENCODING
+        ).ifEmpty { JsObjectWrapperClass.DEFAULT_OUTPUT_ENCODING }
     }
 
     fun resolveContainingFile(): KSFile? {
@@ -77,7 +77,7 @@ class JsObjectWrapperClassResolver(
     }
 
     fun resolveClassComment(): String {
-        return resolveAnnotationArgument(JsObjectInterface::classComment.name, "")
+        return resolveAnnotationArgument(JsObjectWrapperClass::classComment.name, "")
     }
 
     inline fun <reified T> resolveAnnotationArgument(argumentName: String, defaultValue: T): T {
@@ -85,5 +85,11 @@ class JsObjectWrapperClassResolver(
             defaultValue
         else
             annotation.findArgument(argumentName, defaultValue)
+    }
+
+    fun resolvePrimaryConstructor(): String {
+        return resolveAnnotationArgument(JsObjectWrapperClass::primaryConstructor.name, JsObjectWrapperClass.DEFAULT_PRIMARY_CONSTRUCTOR).ifEmpty {
+            JsObjectWrapperClass.DEFAULT_PRIMARY_CONSTRUCTOR
+        }
     }
 }

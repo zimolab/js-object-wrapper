@@ -1,5 +1,6 @@
 package com.github.zimolab.jow.compiler.generator
 
+import com.github.zimolab.jow.annotation.obj.JsObjectWrapperClass
 import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperClass
 import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperFunction
 import com.github.zimolab.jow.array.JsObjectWrapper
@@ -11,6 +12,7 @@ import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.symbol.KSType
 import com.squareup.kotlinpoet.*
+import netscape.javascript.JSObject
 import org.kotlin.formatter.KotlinFormatter
 import java.io.OutputStream
 import java.nio.charset.Charset
@@ -35,7 +37,6 @@ class JsObjectWrapperClassGenerator(
     }
 
     fun submit(resolvedClass: ResolvedJsObjectWrapperClass) {
-        JsObjectWrapper::source.name
         FileGenerateTask(resolvedClass).execute()
     }
 
@@ -127,7 +128,38 @@ class JsObjectWrapperClassGenerator(
         }
 
         private fun createConstructor(classBuilder: TypeSpec.Builder) {
-
+            when(resolvedClass.meta.primaryConstructor) {
+                // 不生成主构造函数
+                JsObjectWrapperClass.PrimaryConstructor.None -> return
+                // 生成空的主构造函数
+                JsObjectWrapperClass.PrimaryConstructor.Blank -> {
+                    val primaryConstructor = FunSpec.constructorBuilder()
+                        .build()
+                    classBuilder
+                        .primaryConstructor(primaryConstructor)
+                }
+                // 生成带属性和参数的主构造函数
+                // 目前可以带的参数只有一个，即来自JsObjectWrapper的source属性
+                JsObjectWrapperClass.PrimaryConstructor.WithParameter -> {
+                    val primaryConstructor = FunSpec.constructorBuilder()
+                        .addParameter(JsObjectWrapper::source.name, JSObject::class)
+                        .build()
+                    classBuilder
+                        .primaryConstructor(primaryConstructor)
+                        .addProperty(
+                            PropertySpec
+                                .builder(JsObjectWrapper::source.name, JSObject::class)
+                                .addModifiers(KModifier.OVERRIDE)
+                                .initializer(JsObjectWrapper::source.name)
+                                .build()
+                        )
+                }
+                else-> {
+                    AnnotationProcessingError("不支持的主构造函数类型（${resolvedClass.meta.primaryConstructor}）").let {
+                        logger.error(it)
+                    }
+                }
+            }
         }
 
         private fun createFunction(
@@ -167,7 +199,6 @@ class JsObjectWrapperClassGenerator(
             val isVoidType = TypeUtils.isVoidType(functionReturnType)
             val isAnyType = TypeUtils.isAnyType(functionReturnType)
             val undefinedAsNull = resolvedFunction.meta.undefinedAsNull
-            logger.debug("$functionName: ${functionReturnType.qualifiedName}")
 
             // 如果返回值不是支持直接转换的本地类型，则需要额外添加一个类型转换函数（模板方法），用来对返回值进行转换
             // 该类型转换函数的名称可以在注解中以returnTypeCastor参数进行指定，如果未指定名称（returnTypeCastor=“None”||returnTypeCastor=“”），

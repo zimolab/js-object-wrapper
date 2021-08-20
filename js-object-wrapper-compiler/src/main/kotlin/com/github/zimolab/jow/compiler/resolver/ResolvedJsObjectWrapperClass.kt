@@ -1,6 +1,6 @@
 package com.github.zimolab.jow.compiler.resolver
 
-import com.github.zimolab.jow.annotation.obj.JsObjectInterface
+import com.github.zimolab.jow.annotation.obj.JsObjectWrapperClass
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 
@@ -64,12 +64,12 @@ class ResolvedJsObjectWrapperClass(
             resolver.resolveOutputFileEncoding()
         }
 
-        val generateArrayType by lazy {
-            resolver.resolveAnnotationArgument(JsObjectInterface::generateArrayType.name, JsObjectInterface.GENERATE_ARRAY_TYPE)
+        val primaryConstructor by lazy {
+            resolver.resolvePrimaryConstructor()
         }
 
         val ignoreUnsupportedTypes by lazy {
-           resolver.resolveAnnotationArgument(JsObjectInterface::ignoreUnsupportedTypes.name, JsObjectInterface.IGNORE_UNSUPPORTED_TYPES)
+           resolver.resolveAnnotationArgument(JsObjectWrapperClass::ignoreUnsupportedTypes.name, JsObjectWrapperClass.IGNORE_UNSUPPORTED_TYPES)
         }
 
     }

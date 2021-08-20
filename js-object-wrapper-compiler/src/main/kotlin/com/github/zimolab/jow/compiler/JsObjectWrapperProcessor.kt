@@ -1,7 +1,7 @@
 package com.github.zimolab.jow.compiler
 
-import com.github.zimolab.jow.annotation.obj.JsObjectFunction
-import com.github.zimolab.jow.annotation.obj.JsObjectInterface
+import com.github.zimolab.jow.annotation.obj.JsObjectWrapperClass
+import com.github.zimolab.jow.annotation.obj.JsObjectWrapperFunction
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.compiler.generator.JsObjectWrapperClassGenerator
 import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperClass
@@ -60,7 +60,7 @@ class JsObjectWrapperProcessor(
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         logger.debug("开始自动处理注解")
-        val symbols = resolver.getSymbolsWithAnnotation(JsObjectInterface::class.qualifiedName!!)
+        val symbols = resolver.getSymbolsWithAnnotation(JsObjectWrapperClass::class.qualifiedName!!)
         val notProcessedSymbols = symbols.filter { !it.validate() }.toList()
         logger.debug("找到${symbols.count()}个被注解的符号")
         symbols
@@ -77,7 +77,7 @@ class JsObjectWrapperProcessor(
             super.visitClassDeclaration(classDeclaration, data)
             logger.debug("正在处理${classDeclaration}")
             if (!classDeclaration.subclassOf(JsObjectWrapper::class)) {
-                AnnotationProcessingError("被@${JsObjectInterface::class.simpleName}注解的接口或者类必须实现${JsObjectWrapper::class.simpleName}接口").let {
+                AnnotationProcessingError("被@${JsObjectWrapperClass::class.simpleName}注解的接口或者类必须实现${JsObjectWrapper::class.simpleName}接口").let {
                     logger.error(it)
                 }
             }
@@ -88,10 +88,10 @@ class JsObjectWrapperProcessor(
                 if (classDeclaration.isAbstract())
                     processAnnotatedClass(annotatedClass = classDeclaration)
                 else {
-                    AnnotationProcessingError("@${JsObjectInterface::class.simpleName}注解不能注解非抽象类").let {
-                        logger.error(it)
+                    AnnotationProcessingError("@${JsObjectWrapperClass::class.simpleName}注解不能注解非抽象类").let {
+                        logger.error(it, throws = false)
+                        throw it
                     }
-                    null
                 }
             }
             resolvedClass?.let {
@@ -101,8 +101,8 @@ class JsObjectWrapperProcessor(
     }
 
     fun processAnnotatedInterface(annotatedInterface: KSClassDeclaration): ResolvedJsObjectWrapperClass? {
-        val annotation = annotatedInterface.findAnnotations(JsObjectInterface::class).firstOrNull()
-            ?: AnnotationProcessingError("无法找到${JsObjectInterface::class.simpleName}注解").let {
+        val annotation = annotatedInterface.findAnnotations(JsObjectWrapperClass::class).firstOrNull()
+            ?: AnnotationProcessingError("无法找到${JsObjectWrapperClass::class.simpleName}注解").let {
                 logger.error(it)
                 return null
             }
@@ -112,10 +112,10 @@ class JsObjectWrapperProcessor(
             options = options)
         // 解析全部函数
         annotatedInterface.getDeclaredFunctions().forEach {functionDeclaration->
-            val functionAnnotation = functionDeclaration.findAnnotations(JsObjectFunction::class).firstOrNull()
+            val functionAnnotation = functionDeclaration.findAnnotations(JsObjectWrapperFunction::class).firstOrNull()
             resolvedClass.addFunction(ResolvedJsObjectWrapperFunction(functionDeclaration, functionAnnotation))
         }
-        // 解析全部属性
+        //TODO 解析全部属性
         annotatedInterface.getDeclaredProperties().forEach {
         }
         return resolvedClass

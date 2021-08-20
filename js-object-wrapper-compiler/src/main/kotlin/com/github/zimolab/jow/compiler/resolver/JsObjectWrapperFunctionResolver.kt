@@ -1,6 +1,6 @@
 package com.github.zimolab.jow.compiler.resolver
 
-import com.github.zimolab.jow.annotation.obj.JsObjectFunction
+import com.github.zimolab.jow.annotation.obj.JsObjectWrapperFunction
 import com.github.zimolab.jow.compiler.*
 import com.github.zimolab.jow.compiler.qualifiedNameStr
 import com.github.zimolab.jow.compiler.simpleNameStr
@@ -53,7 +53,7 @@ class JsObjectWrapperFunctionResolver(
     }
 
     fun resolveReturnTypeCastor(): String? {
-        return resolveAnnotationArgument(JsObjectFunction::returnTypeCastor.name, JsObjectFunction.RETURN_TYPE_CASTOR).let {
+        return resolveAnnotationArgument(JsObjectWrapperFunction::returnTypeCastor.name, JsObjectWrapperFunction.RETURN_TYPE_CASTOR).let {
             if (it.equals("None", true) || it.isEmpty())
                 null
             else
