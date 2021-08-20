@@ -1,4 +1,4 @@
-package com.github.zimolab.jow.annotation.`object`
+package com.github.zimolab.jow.annotation.obj
 
 @Target(AnnotationTarget.CLASS)
 annotation class JsObjectInterface(

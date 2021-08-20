@@ -2,8 +2,8 @@ package com.github.zimolab.jow.sample
 
 import com.github.zimolab.jsarray.base.JsArray
 import com.github.zimolab.jsarray.base.JsArrayInterface
-import com.github.zimolab.jow.annotation.`object`.JsObjectFunction
-import com.github.zimolab.jow.annotation.`object`.JsObjectInterface
+import com.github.zimolab.jow.annotation.obj.JsObjectFunction
+import com.github.zimolab.jow.annotation.obj.JsObjectInterface
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.array.JsObjectWrapperArray
 import netscape.javascript.JSObject

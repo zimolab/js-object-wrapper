@@ -1,6 +1,6 @@
 package com.github.zimolab.jow.compiler.resolver;
 
-import com.github.zimolab.jow.annotation.`object`.JsObjectInterface
+import com.github.zimolab.jow.annotation.obj.JsObjectInterface
 import com.github.zimolab.jow.compiler.findArgument
 import com.github.zimolab.jow.compiler.packageNameStr
 import com.github.zimolab.jow.compiler.qualifiedNameStr

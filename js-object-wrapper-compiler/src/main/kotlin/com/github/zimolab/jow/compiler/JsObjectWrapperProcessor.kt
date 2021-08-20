@@ -1,7 +1,7 @@
 package com.github.zimolab.jow.compiler
 
-import com.github.zimolab.jow.annotation.`object`.JsObjectFunction
-import com.github.zimolab.jow.annotation.`object`.JsObjectInterface
+import com.github.zimolab.jow.annotation.obj.JsObjectFunction
+import com.github.zimolab.jow.annotation.obj.JsObjectInterface
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.compiler.generator.JsObjectWrapperClassGenerator
 import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperClass
