@@ -1,10 +1,12 @@
 package com.github.zimolab.jsobjectwrapper.compiler.resolver
 
+import com.github.zimolab.jsobjectwrapper.annotation.JsObjectFunction
 import com.github.zimolab.jsobjectwrapper.compiler.*
 import com.github.zimolab.jsobjectwrapper.compiler.qualifiedNameStr
 import com.github.zimolab.jsobjectwrapper.compiler.simpleNameStr
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.google.devtools.ksp.symbol.KSType
 import java.util.logging.Logger
 
 class JsObjectWrapperFunctionResolver(
@@ -40,12 +42,21 @@ class JsObjectWrapperFunctionResolver(
         return parameters
     }
 
-    fun resolveReturnType() {
+    fun resolveReturnType(): KSType {
         val rt = declaration.returnType?.resolve()
-        if (rt == null) {
-            AnnotationProcessingError("在解析函数(${declaration.simpleNameStr})返回值时出现一个错误").let {
-                logger.error(it)
+            ?: AnnotationProcessingError("在解析函数(${declaration.simpleNameStr})返回值时出现一个错误").let {
+                logger.error(it, throws = false)
+                throw it
             }
+        return rt
+    }
+
+    fun resolveReturnTypeCastor(): String? {
+        return resolveAnnotationArgument(JsObjectFunction::returnTypeCastor.name, JsObjectFunction.RETURN_TYPE_CASTOR).let {
+            if (it.equals("None", true) || it.isEmpty())
+                null
+            else
+                it
         }
     }
 

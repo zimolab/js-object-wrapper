@@ -1,8 +1,15 @@
 package com.github.zimolab.jsobjectwrapper.sample
 
+import com.github.zimolab.jsarray.base.JsArray
+import com.github.zimolab.jsarray.base.JsArrayInterface
+import com.github.zimolab.jsobjectwrapper.annotation.JsObjectFunction
 import com.github.zimolab.jsobjectwrapper.annotation.JsObjectInterface
 import com.github.zimolab.jsobjectwrapper.array.JsObjectWrapper
+import com.github.zimolab.jsobjectwrapper.array.JsObjectWrapperArray
+import netscape.javascript.JSObject
 import java.nio.file.Path
+import java.security.Key
+import java.util.*
 
 @JsObjectInterface
 interface JsDate: JsObjectWrapper {
@@ -10,8 +17,25 @@ interface JsDate: JsObjectWrapper {
     /** Returns a String representation of a date. The format of the String depends on the locale. */
     override fun toString(): String
 
+    @JsObjectFunction(undefinedAsNull = false, raiseExceptionOnUndefined = true)
     /** Returns a date as a String value. */
     fun toDateString(): String
+
+    @JsObjectFunction(undefinedAsNull = true)
+    fun test1(): Unit
+    @JsObjectFunction(returnTypeCastor = "__asJsDate__")
+    fun test2(a: JsDateTime, b: JsDateTimeImp, c: Any, d: JsDate, vararg dates: JsDate): JsDateTimeImp
+    fun test3(a: Int, b: JSObject?, c: Any, d: JsDate?, vararg dates: JsDate?)
+    fun test4(a: Int, b: JsArray<Any?>, d: JsObjectWrapperArray<JsDate>?, vararg dates: Int)
+    fun test5(b: JsArray<Any?>?, d: JsObjectWrapperArray<JsDate>?, vararg dates: Date?)
+    fun test6(b: JsArray<Any?>?, d: JsObjectWrapperArray<JsDate>?, vararg dates: Int?)
+    fun test7(vararg dates: JSObject)
+    fun test8(vararg dates: JsDate)
+    fun test9(vararg dates: JsArray<Any?>)
+    fun test10(vararg dates: JsObjectWrapperArray<JsDateTimeImp?>)
+    fun test11(vararg dates: List<Double>)
+    fun test12(vararg dates: Map<Key, Double>): JsArrayInterface<JsDateTimeImp?>
+    fun test13(vararg dates: Collection<Any?>)
 
     /** Returns a time as a String value. */
     fun toTimeString(): String
@@ -211,4 +235,7 @@ interface JsDate: JsObjectWrapper {
 
     /** Used by the JSON.Stringify method to enable the transformation of an object's data for JavaScript Object Notation (JSON) serialization. */
     fun toJSON(key: Any): String
+
+    fun copy(): JsDate
+    fun clone(): JsDate
 }

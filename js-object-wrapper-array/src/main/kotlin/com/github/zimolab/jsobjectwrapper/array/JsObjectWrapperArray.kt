@@ -2,7 +2,7 @@ package com.github.zimolab.jsobjectwrapper.array
 
 import netscape.javascript.JSObject
 
-abstract class JsObjectWrapperArray<T: JsObjectWrapper>(reference: JSObject, useCache: Boolean = true): JsObjectWrapperArrayTemplate<T>(reference) {
+abstract class JsObjectWrapperArray<T: JsObjectWrapper?>(reference: JSObject, useCache: Boolean = true): JsObjectWrapperArrayTemplate<T>(reference) {
     private val caches = mutableMapOf<Int, T>()
 
     override var useCache: Boolean = useCache
