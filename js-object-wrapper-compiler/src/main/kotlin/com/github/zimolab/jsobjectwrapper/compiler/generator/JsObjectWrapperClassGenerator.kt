@@ -1,16 +1,17 @@
 package com.github.zimolab.jsobjectwrapper.compiler.generator
 
-import com.github.zimolab.jsobjectwrapper.compiler.debug
-import com.github.zimolab.jsobjectwrapper.compiler.error
 import com.github.zimolab.jsobjectwrapper.compiler.resolver.ResolvedJsObjectWrapperClass
-import com.github.zimolab.jsobjectwrapper.compiler.JsObjectWrapperProcessor
+import com.github.zimolab.jsobjectwrapper.compiler.resolver.ResolvedJsObjectWrapperFunction
+import com.github.zimolab.jsobjectwrapper.array.JsObjectWrapper
+import com.github.zimolab.jsobjectwrapper.compiler.*
 import com.github.zimolab.jsobjectwrapper.compiler.asTypeName
+import com.github.zimolab.jsobjectwrapper.compiler.resolver.ArgumentsResolver
+import com.github.zimolab.jsobjectwrapper.compiler.resolver.TypeUtils
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.KModifier
-import com.squareup.kotlinpoet.TypeSpec
+import com.google.devtools.ksp.symbol.KSType
+import com.squareup.kotlinpoet.*
+import org.kotlin.formatter.KotlinFormatter
 import java.io.OutputStream
 import java.nio.charset.Charset
 import java.time.LocalDateTime
@@ -29,9 +30,12 @@ class JsObjectWrapperClassGenerator(
                 "Any changes to it may be lost.\n" +
                 "DO NOT MODIFY IT MANUALLY!!!\n" +
                 "Generate at ${LocalDateTime.now()}"
+        val CodeFormatter = KotlinFormatter()
+
     }
 
     fun submit(resolvedClass: ResolvedJsObjectWrapperClass) {
+        JsObjectWrapper::source.name
         FileGenerateTask(resolvedClass).execute()
     }
 
@@ -41,7 +45,7 @@ class JsObjectWrapperClassGenerator(
             // 依赖
             val dependencies = resolvedClass.containingFile?.let {
                 Dependencies(aggregating = true, it)
-            }?: Dependencies(aggregating = true)
+            } ?: Dependencies(aggregating = true)
             // 输出流
             val outputStream: OutputStream = codeGenerator.createNewFile(
                 fileName = resolvedClass.meta.outputFilename,
@@ -52,11 +56,12 @@ class JsObjectWrapperClassGenerator(
             logger.debug("文件生成完毕")
         }
 
-        fun write2File(fileSpec: FileSpec, outputStream: OutputStream) {
+        private fun write2File(fileSpec: FileSpec, outputStream: OutputStream) {
             val outputFileEncoding = try {
                 if (KEY_ENCODING in options) {
                     Charset.forName(options[KEY_ENCODING]!!)
                 } else {
+                    logger.debug("输出文件编码字符集：${resolvedClass.meta.outputFileEncoding}")
                     Charset.forName(resolvedClass.meta.outputFileEncoding)
                 }
             } catch (e: Throwable) {
@@ -104,13 +109,11 @@ class JsObjectWrapperClassGenerator(
             createFunctions(classBuilder)
             // 创建成员属性
             createProperties(classBuilder)
-            // 创建companion成员
-            createCompanionObjec(classBuilder, companionObjectBuilder)
             classBuilder.addType(companionObjectBuilder.build())
             return classBuilder.build()
         }
 
-        private fun createCompanionObjec(classBuilder: TypeSpec.Builder, companionObjectBuilder: TypeSpec.Builder) {
+        private fun createCompanionMembers(classBuilder: TypeSpec.Builder, companionObjectBuilder: TypeSpec.Builder) {
 
         }
 
@@ -119,11 +122,130 @@ class JsObjectWrapperClassGenerator(
         }
 
         private fun createFunctions(classBuilder: TypeSpec.Builder) {
-
+            val funSpecs = resolvedClass.functions.filter { !it.meta.skipped }.map { createFunction(it, classBuilder) }
+            classBuilder.addFunctions(funSpecs)
         }
 
         private fun createConstructor(classBuilder: TypeSpec.Builder) {
 
+        }
+
+        private fun createFunction(
+            resolvedFunction: ResolvedJsObjectWrapperFunction,
+            classBuilder: TypeSpec.Builder
+        ): FunSpec {
+            val functionName = resolvedFunction.simpleName
+            val jsMemberName = resolvedFunction.meta.jsMemberName
+            val functionParameters = resolvedFunction.parameters
+            val functionReturnType = resolvedFunction.returnType
+            val raiseExceptionOnUndefined = resolvedFunction.meta.raiseExceptionOnUndefined
+
+            val functionBuilder = FunSpec
+                .builder(functionName)
+                .addModifiers(KModifier.OVERRIDE)
+                .returns(functionReturnType.asTypeName())
+
+            // 添加函数参数
+            functionParameters.forEach { param ->
+                val paramSpec = if (param.isVarargs) {
+                    ParameterSpec.builder(param.name, param.type.asTypeName(), KModifier.VARARG).build()
+                } else {
+                    ParameterSpec.builder(param.name, param.type.asTypeName()).build()
+                }
+                functionBuilder.addParameter(paramSpec)
+            }
+
+            // 添加函数体
+            val argumentsBuffer = StringBuffer()
+//            functionParameters.joinTo(argumentsBuffer, ",") {
+//                if (it.isVarargs) "*${it.name}" else it.name
+//            }
+            ArgumentsResolver.resolve(functionParameters).joinTo(argumentsBuffer)
+
+            val nullable = TypeUtils.isNullable(functionReturnType)
+            val isNativeType = TypeUtils.isNativeType(functionReturnType)
+            val isVoidType = TypeUtils.isVoidType(functionReturnType)
+            val isAnyType = TypeUtils.isAnyType(functionReturnType)
+            val undefinedAsNull = resolvedFunction.meta.undefinedAsNull
+            logger.debug("$functionName: ${functionReturnType.qualifiedName}")
+
+            // 如果返回值不是支持直接转换的本地类型，则需要额外添加一个类型转换函数（模板方法），用来对返回值进行转换
+            // 该类型转换函数的名称可以在注解中以returnTypeCastor参数进行指定，如果未指定名称（returnTypeCastor=“None”||returnTypeCastor=“”），
+            // 则使用默认规则自动生成一个名称，名称生成规则为：__as${returnType}__
+            if (!isNativeType && !isVoidType && !isAnyType) {
+                if (resolvedFunction.meta.returnTypeCastor == null)
+                    resolvedFunction.meta.returnTypeCastor = "__as${functionReturnType.simpleName}__"
+                createReturnTypeCastor(resolvedFunction.meta.returnTypeCastor, functionReturnType, classBuilder)
+            }
+            val returnTypeCastor = resolvedFunction.meta.returnTypeCastor
+
+            val codeTemplate = """val ret = ${JsObjectWrapper::source.name}.call(%S, %L)
+            ${
+                if (nullable && undefinedAsNull)
+                    "if(ret == null || ret == \"undefined\")\n" +
+                            "return null"
+                else if (nullable && !undefinedAsNull)
+                    "if(ret == null)\n" +
+                            "return null"
+                else
+                    ""
+            }
+            ${
+                if (!undefinedAsNull && raiseExceptionOnUndefined)
+                    "if(ret == \"undefined\") \n" +
+                            "throw RuntimeException(\"an undefined returned.\")"
+                else
+                    ""
+            }
+            ${
+                if (isVoidType)
+                    "return Unit"
+                else if (isAnyType)
+                    "return ret"
+                else if (isNativeType)
+                    "if(ret !is %T)\n" +
+                            "throw RuntimeException(\"the type of return value is not as expected.\")\n" + "return ret"
+                else
+                    "return ${returnTypeCastor}(ret)"
+            }
+            """
+
+            val codeBlock = if (isNativeType) {
+                CodeBlock.of(
+                    codeTemplate,
+                    jsMemberName,
+                    argumentsBuffer.toString(),
+                    functionReturnType.asTypeName().copy(nullable = false)
+                ).toString()
+            } else {
+                CodeBlock.of(
+                    codeTemplate,
+                    jsMemberName,
+                    argumentsBuffer.toString(),
+                ).toString()
+            }.let {
+                CodeFormatter.format(it)
+            }
+            functionBuilder.addCode(codeBlock.replace(" ", "·"))
+            return functionBuilder.build()
+        }
+
+        private fun createReturnTypeCastor(
+            returnTypeCastor: String?,
+            returnType: KSType,
+            classBuilder: TypeSpec.Builder
+        ) {
+            if (returnTypeCastor == null)
+                return
+            val castor = classBuilder.funSpecs.firstOrNull { it.name == returnTypeCastor }
+            if (castor == null) {
+                val builder = FunSpec
+                    .builder(returnTypeCastor)
+                    .addModifiers(KModifier.ABSTRACT)
+                    .returns(returnType.asTypeName())
+                    .addParameter("originReturn", Any::class.asTypeName())
+                classBuilder.addFunction(builder.build())
+            }
         }
     }
 }

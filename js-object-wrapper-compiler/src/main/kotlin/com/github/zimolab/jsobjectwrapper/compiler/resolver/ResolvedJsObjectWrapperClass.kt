@@ -61,7 +61,7 @@ class ResolvedJsObjectWrapperClass(
         }
 
         val outputFileEncoding by lazy {
-            resolver.resolveOutputFilename()
+            resolver.resolveOutputFileEncoding()
         }
 
         val ignoreUnsupportedTypes by lazy {

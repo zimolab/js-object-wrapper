@@ -14,7 +14,7 @@ class ResolvedJsObjectWrapperFunction(
     data class FunctionParameter(
         val name: String,
         val type: KSType,
-        val varargs: Boolean = false
+        val isVarargs: Boolean = false
     )
 
     val simpleName by lazy {
@@ -38,8 +38,31 @@ class ResolvedJsObjectWrapperFunction(
     }
 
     inner class MetaData {
-        val raiseExceptionOnUndefined by lazy {
-            resolver.resolveAnnotationArgument(JsObjectFunction::raiseExceptionOnUndefined.name, JsObjectFunction.RAISE_EXCEPTION_ON_UNDEFINED)
+        val undefinedAsNull by lazy {
+            resolver.resolveAnnotationArgument(JsObjectFunction::undefinedAsNull.name, JsObjectFunction.UNDEFINED_AS_NULL)
         }
+
+        val raiseExceptionOnUndefined by lazy {
+            if (undefinedAsNull)
+                false
+            else
+                resolver.resolveAnnotationArgument(JsObjectFunction::raiseExceptionOnUndefined.name, JsObjectFunction.RAISE_EXCEPTION_ON_UNDEFINED)
+        }
+
+        val skipped by lazy {
+            resolver.resolveAnnotationArgument(JsObjectFunction::skip.name, JsObjectFunction.SKIP)
+        }
+
+        val jsMemberName by lazy {
+            resolver.resolveAnnotationArgument(JsObjectFunction::jsMemberName.name, simpleName).ifEmpty { simpleName }
+        }
+
+        var returnTypeCastor: String? = resolver.resolveReturnTypeCastor()
+            set(value) {
+                field = if (value.equals("None", true) || value == "")
+                    null
+                else
+                    value
+            }
     }
 }

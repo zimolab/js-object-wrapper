@@ -8,6 +8,7 @@ plugins {
 val kspVersion: String by rootProject
 val groupIdDef: String by rootProject
 val versionIdDef: String by rootProject
+val jsArrayVersion: String by rootProject
 
 group = groupIdDef
 version = versionIdDef
@@ -19,14 +20,21 @@ repositories {
     maven {
         setUrl("https://jitpack.io")
     }
+
+    flatDir {
+        dir("libs")
+    }
 }
 
 dependencies {
     implementation(kotlin("stdlib"))
     implementation("com.google.devtools.ksp:$kspVersion")
     implementation("com.squareup:kotlinpoet:1.9.0")
+    implementation("com.github.zimolab:js-array:$jsArrayVersion")
+
     implementation(project(":js-object-wrapper-array"))
     implementation(project(":js-object-wrapper-annotation"))
+    implementation(files("libs/formatter.jar"))
 }
 
 java {

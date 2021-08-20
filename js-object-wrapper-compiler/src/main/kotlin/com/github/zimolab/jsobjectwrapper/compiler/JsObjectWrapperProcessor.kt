@@ -112,7 +112,6 @@ class JsObjectWrapperProcessor(
             options = options)
         // 解析全部函数
         annotatedInterface.getDeclaredFunctions().forEach {functionDeclaration->
-            logger.debug("正在解析函数：${functionDeclaration.simpleNameStr}")
             val functionAnnotation = functionDeclaration.findAnnotations(JsObjectFunction::class).firstOrNull()
             resolvedClass.addFunction(ResolvedJsObjectWrapperFunction(functionDeclaration, functionAnnotation))
         }

@@ -204,12 +204,12 @@ fun Logger.debug(msg: String) {
 }
 
 fun Logger.error(e: Throwable, throws: Boolean = true) {
-    val msg = if (e.localizedMessage == null) {
+    val msg = if (e.message == null) {
         e.toString()
     } else {
-        e.localizedMessage
+        e.message
     }
-    this.error(msg)
+    this.error(msg!!)
     if (throws) {
         this.shutdown()
         throw e
