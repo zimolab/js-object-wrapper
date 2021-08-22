@@ -10,7 +10,7 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFile
 import com.google.devtools.ksp.symbol.KSType
 
-class JsObjectWrapperClassResolver(
+class ClassResolver(
     val declaration: KSClassDeclaration,
     val annotation: KSAnnotation?,
     val options: Map<String, String>

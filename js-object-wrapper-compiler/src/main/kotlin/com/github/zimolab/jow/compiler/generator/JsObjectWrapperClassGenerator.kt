@@ -1,13 +1,16 @@
 package com.github.zimolab.jow.compiler.generator
 
 import com.github.zimolab.jow.annotation.obj.JsObjectWrapperClass
+import com.github.zimolab.jow.annotation.obj.JsObjectWrapperProperty
 import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperClass
 import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperFunction
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.compiler.*
 import com.github.zimolab.jow.compiler.asTypeName
-import com.github.zimolab.jow.compiler.resolver.ArgumentsResolver
-import com.github.zimolab.jow.compiler.resolver.TypeUtils
+import com.github.zimolab.jow.compiler.TypeUtils
+import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperProperty
+import com.github.zimolab.jow.compiler.resolver.TypeCastor
+import com.github.zimolab.jsarray.base.JsArrayInterface
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.symbol.KSType
@@ -19,6 +22,7 @@ import java.nio.charset.Charset
 import java.time.LocalDateTime
 import java.util.logging.Logger
 
+@ExperimentalUnsignedTypes
 class JsObjectWrapperClassGenerator(
     val options: Map<String, String>,
     val codeGenerator: CodeGenerator,
@@ -40,7 +44,106 @@ class JsObjectWrapperClassGenerator(
         FileGenerateTask(resolvedClass).execute()
     }
 
+    @ExperimentalUnsignedTypes
+    private object FunctionArgumentsResolver {
+        fun resolve(arguments: List<ResolvedJsObjectWrapperFunction.FunctionParameter>): MutableList<String> {
+            val argumentList = mutableListOf<String>()
+            arguments.forEach { arg ->
+                argumentList.add(resolveArgument(arg))
+            }
+            return argumentList
+        }
+
+        private fun resolveArgument(argument: ResolvedJsObjectWrapperFunction.FunctionParameter): String {
+            return if (argument.isVarargs)
+                resolveVarargs(argument)
+            else
+                resolveNormalArg(argument)
+        }
+
+        private fun resolveVarargs(argument: ResolvedJsObjectWrapperFunction.FunctionParameter): String {
+            val mapPart = if (TypeUtils.isJsObjectWrapperType(argument.type)) {
+                "_${resolveJsObjectWrapperArg(argument)}"
+
+            } else if (TypeUtils.isJsArrayInterfaceType(argument.type)) {
+                "_${resolveJsArrayArg(argument)}"
+            } else {
+                null
+            }
+            val arg = argument.name
+            return when (mapPart) {
+                null -> {
+                    val logger = Logger.getLogger(JsObjectWrapperProcessor::class.java.canonicalName)
+                    logger.debug("arg type: ${argument.type}")
+                    if (TypeUtils.hasToTypedArrayFunction(argument.type)) {
+                        "*(${arg}.toTypedArray())"
+                    } else {
+                        "*(${arg})"
+                    }
+                }
+                else -> {
+                    "*(${arg}.map{_${arg}-> $mapPart }.toTypedArray())"
+                }
+            }
+        }
+
+        private fun resolveNormalArg(argument: ResolvedJsObjectWrapperFunction.FunctionParameter): String {
+            return if (TypeUtils.isJsObjectWrapperType(argument.type)) {
+                resolveJsObjectWrapperArg(argument)
+            } else if (TypeUtils.isJsArrayInterfaceType(argument.type)) {
+                resolveJsArrayArg(argument)
+            } else {
+                argument.name
+            }
+
+        }
+
+        private fun resolveJsObjectWrapperArg(argument: ResolvedJsObjectWrapperFunction.FunctionParameter): String {
+            return if (TypeUtils.isNullable(argument.type))
+                "${argument.name}?.${JsObjectWrapper::source.name}"
+            else
+                "${argument.name}.${JsObjectWrapper::source.name}"
+        }
+
+        private fun resolveJsArrayArg(argument: ResolvedJsObjectWrapperFunction.FunctionParameter): String {
+            return if (TypeUtils.isNullable(argument.type))
+                "${argument.name}?.${JsArrayInterface<*>::reference.name}"
+            else
+                "${argument.name}.${JsArrayInterface<*>::reference.name}"
+        }
+
+    }
+
+    private object PropertyArgumentResolver {
+        fun resolveSetterArgument(property: ResolvedJsObjectWrapperProperty, argumentName: String): String {
+            return if (TypeUtils.isJsObjectWrapperType(property.type)) {
+                if (property.nullable)
+                    "$argumentName?.${JsObjectWrapper::source.name}"
+                else
+                    "$argumentName.${JsObjectWrapper::source.name}"
+            } else if (TypeUtils.isJsArrayInterfaceType(property.type)) {
+                if (property.nullable)
+                    "$argumentName?.${JsArrayInterface<*>::reference.name}"
+                else
+                    "$argumentName.${JsArrayInterface<*>::reference.name}"
+            } else if (TypeUtils.isNativeType(property.type) || TypeUtils.isAnyType(property.type) || TypeUtils.isVoidType(
+                    property.type
+                )
+            ) {
+                return argumentName
+            } else {
+                return if (property.meta.setterTypeCastorName == null || property.meta.setterTypeCastorName == JsObjectWrapperProperty.TYPE_CAST_USE_AS_OPERATOR) {
+                    argumentName
+                } else {
+                    "${property.meta.setterTypeCastorName}($argumentName)"
+                }
+            }
+        }
+    }
+
     inner class FileGenerateTask(private val resolvedClass: ResolvedJsObjectWrapperClass) {
+
+
         fun execute() {
             logger.debug("开始生成文件(class ${resolvedClass.meta.outputClassName}@${resolvedClass.meta.outputFilename}.kt)")
             // 依赖
@@ -119,7 +222,155 @@ class JsObjectWrapperClassGenerator(
         }
 
         private fun createProperties(classBuilder: TypeSpec.Builder) {
+            val propSpecs =
+                resolvedClass.properties.filter { !it.meta.skipped }.map { createProperty(it, classBuilder) }
+            classBuilder.addProperties(propSpecs)
+        }
 
+        private fun createProperty(
+            resolvedProperty: ResolvedJsObjectWrapperProperty,
+            classBuilder: TypeSpec.Builder
+        ): PropertySpec {
+
+            val propertyBuilder = PropertySpec.builder(resolvedProperty.simpleName, resolvedProperty.type.asTypeName())
+            propertyBuilder
+                .mutable(resolvedProperty.mutable)
+                .addModifiers(KModifier.OVERRIDE)
+
+            val nullable = resolvedProperty.nullable
+            val undefinedAsNull = resolvedProperty.meta.undefinedAsNull
+            val raiseExceptionOnUndefined = resolvedProperty.meta.raiseExceptionOnUndefined
+            val isVoidType = TypeUtils.isVoidType(resolvedProperty.type)
+            val isNativeType = TypeUtils.isNativeType(resolvedProperty.type)
+            val isAnyType = TypeUtils.isAnyType(resolvedProperty.type)
+            val isJsObjectWrapper = TypeUtils.isJsObjectWrapperType(resolvedProperty.type)
+            val isJsArrayInterface = TypeUtils.isJsArrayInterfaceType(resolvedProperty.type)
+
+            // getter
+            // 当castor的类别为NOT_APPLICABLE或AS_OPERATOR时无需创建自定义的类型转换函数
+            val getterTypeCastor = resolvedProperty.meta.getterTypeCastor
+            if (getterTypeCastor.category == TypeCastor.Category.USER_SPECIFIED ||
+                getterTypeCastor.category == TypeCastor.Category.AUTO_GENERATED
+            ) {
+                createTypeCastor(
+                    getterTypeCastor.castorName!!,
+                    Any::class.asTypeName().copy(nullable = true),
+                    resolvedProperty.type.asTypeName(),
+                    classBuilder
+                )
+            }
+            val getterBuilder = FunSpec.getterBuilder()
+            val getterCodeTemplate = """
+                val ret = ${JsObjectWrapper::source.name}.getMember(%S)
+            ${
+                if (nullable && undefinedAsNull)
+                    """
+                    if(ret == null || ret == "undefined")
+                        return null
+                    """
+                else if (nullable && !undefinedAsNull)
+                    """
+                    if(ret == null)
+                        return null
+                    """
+                else
+                    ""
+            }
+            ${
+                if (!undefinedAsNull && raiseExceptionOnUndefined)
+                    """
+                    if(ret == "undefined")
+                        throw RuntimeException("an undefined returned.")
+                    return ret
+                    """
+                else
+                    ""
+            }
+            ${
+                if (isVoidType) {
+                    "return Unit"
+                } else if (isAnyType) {
+                    "return ret"
+                } else if (isNativeType) {
+                    """
+                    if(ret !is %T)
+                        throw RuntimeException("the type of return value is not as expected.")
+                    return  ret
+                    """
+                } else {
+                    if (getterTypeCastor.category == TypeCastor.Category.USER_SPECIFIED || 
+                        getterTypeCastor.category == TypeCastor.Category.AUTO_GENERATED)
+                        "return ${getterTypeCastor.castorName!!}(ret)"
+                    else
+                        "return ret as ${resolvedProperty.type.asTypeName().copy(nullable = false)}"
+                }
+            }
+            """
+            val getterCodeBlock = if (isNativeType) {
+                CodeBlock.of(
+                    getterCodeTemplate,
+                    resolvedProperty.meta.jsMemberName,
+                    resolvedProperty.type.asTypeName()
+                )
+                    .toString()
+            } else {
+                CodeBlock.of(getterCodeTemplate, resolvedProperty.meta.jsMemberName).toString()
+            }.let {
+                CodeFormatter.format(it).replace(" ", "·")
+            }
+            getterBuilder.addCode(getterCodeBlock)
+            propertyBuilder.getter(getterBuilder.build())
+            //~getter
+
+            //setter
+            val setterTypeCastorName = resolvedProperty.meta.setterTypeCastorName
+            if (setterTypeCastorName != null
+                && !(isNativeType || isVoidType || isAnyType)
+                && !(isJsObjectWrapper || isJsArrayInterface)
+            ) {
+                createTypeCastor(
+                    setterTypeCastorName,
+                    resolvedProperty.type.asTypeName(),
+                    Any::class.asTypeName().copy(nullable = true),
+                    classBuilder
+                )
+            }
+            val setterParamName = "v"
+            val setterArgument = PropertyArgumentResolver.resolveSetterArgument(resolvedProperty, setterParamName)
+            if (resolvedProperty.mutable) {
+                val setterBuilder = FunSpec.setterBuilder()
+                val setterCodeTemplate = """
+                    ${JsObjectWrapper::source.name}.setMember(%S, $setterArgument)
+                """
+                val setterCodeBlock =
+                    CodeBlock.of(setterCodeTemplate, resolvedProperty.meta.jsMemberName)
+                        .toString().let {
+                            CodeFormatter.format(it).replace(" ", "·")
+                        }
+                setterBuilder
+                    .addParameter(setterParamName, resolvedProperty.type.asTypeName())
+                    .addCode(setterCodeBlock)
+                propertyBuilder.setter(setterBuilder.build())
+            }
+            //~setter
+            return propertyBuilder.build()
+        }
+
+        private fun createTypeCastor(
+            typeCastorName: String,
+            argumentType: TypeName,
+            returnType: TypeName,
+            classBuilder: TypeSpec.Builder
+        ) {
+            if (classBuilder.funSpecs.firstOrNull { it.name == typeCastorName } != null)
+                return
+            val typeCastor = FunSpec
+                .builder(typeCastorName)
+                .addModifiers(KModifier.ABSTRACT)
+                .addParameter("originReturn", argumentType)
+                .returns(returnType)
+                .build()
+            classBuilder.addFunction(typeCastor)
         }
 
         private fun createFunctions(classBuilder: TypeSpec.Builder) {
@@ -128,7 +379,7 @@ class JsObjectWrapperClassGenerator(
         }
 
         private fun createConstructor(classBuilder: TypeSpec.Builder) {
-            when(resolvedClass.meta.primaryConstructor) {
+            when (resolvedClass.meta.primaryConstructor) {
                 // 不生成主构造函数
                 JsObjectWrapperClass.PrimaryConstructor.None -> return
                 // 生成空的主构造函数
@@ -154,7 +405,7 @@ class JsObjectWrapperClassGenerator(
                                 .build()
                         )
                 }
-                else-> {
+                else -> {
                     AnnotationProcessingError("不支持的主构造函数类型（${resolvedClass.meta.primaryConstructor}）").let {
                         logger.error(it)
                     }
@@ -189,10 +440,7 @@ class JsObjectWrapperClassGenerator(
 
             // 添加函数体
             val argumentsBuffer = StringBuffer()
-//            functionParameters.joinTo(argumentsBuffer, ",") {
-//                if (it.isVarargs) "*${it.name}" else it.name
-//            }
-            ArgumentsResolver.resolve(functionParameters).joinTo(argumentsBuffer)
+            FunctionArgumentsResolver.resolve(functionParameters).joinTo(argumentsBuffer)
 
             val nullable = TypeUtils.isNullable(functionReturnType)
             val isNativeType = TypeUtils.isNativeType(functionReturnType)
@@ -210,7 +458,8 @@ class JsObjectWrapperClassGenerator(
             }
             val returnTypeCastor = resolvedFunction.meta.returnTypeCastor
 
-            val codeTemplate = """val ret = ${JsObjectWrapper::source.name}.call(%S, %L)
+            val codeTemplate = """
+                val ret = ${JsObjectWrapper::source.name}.call(%S, %L)
             ${
                 if (nullable && undefinedAsNull)
                     "if(ret == null || ret == \"undefined\")\n" +
@@ -234,8 +483,8 @@ class JsObjectWrapperClassGenerator(
                 else if (isAnyType)
                     "return ret"
                 else if (isNativeType)
-                    "if(ret !is %T)\n" +
-                            "throw RuntimeException(\"the type of return value is not as expected.\")\n" + "return ret"
+                    "if(ret !is %T)\n throw RuntimeException(\"the type of return value is not as expected.\")\n" +
+                            "return ret"
                 else
                     "return ${returnTypeCastor}(ret)"
             }

@@ -9,7 +9,7 @@ class ResolvedJsObjectWrapperFunction(
     val originDeclaration: KSFunctionDeclaration,
     val originAnnotation: KSAnnotation?
 ) {
-    private val resolver = JsObjectWrapperFunctionResolver(originDeclaration, originAnnotation)
+    private val resolver = FunctionResolver(originDeclaration, originAnnotation)
 
     data class FunctionParameter(
         val name: String,
@@ -18,11 +18,11 @@ class ResolvedJsObjectWrapperFunction(
     )
 
     val simpleName by lazy {
-        resolver.resolveFunctionName()
+        resolver.resolveName()
     }
 
     val qualifiedName by lazy {
-        resolver.resolveQualifiedFunctionName()
+        resolver.resolveQualifiedName()
     }
 
     val returnType by lazy {

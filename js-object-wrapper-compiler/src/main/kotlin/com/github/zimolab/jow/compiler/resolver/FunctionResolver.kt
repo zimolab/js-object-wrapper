@@ -9,17 +9,17 @@ import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import java.util.logging.Logger
 
-class JsObjectWrapperFunctionResolver(
+class FunctionResolver(
     val declaration: KSFunctionDeclaration,
     val annotation: KSAnnotation?
 ) {
     private val logger: Logger = Logger.getLogger(JsObjectWrapperProcessor::class.java.canonicalName)
 
-    fun resolveFunctionName(): String {
+    fun resolveName(): String {
         return declaration.simpleNameStr
     }
 
-    fun resolveQualifiedFunctionName(): String {
+    fun resolveQualifiedName(): String {
         return declaration.qualifiedNameStr
     }
 

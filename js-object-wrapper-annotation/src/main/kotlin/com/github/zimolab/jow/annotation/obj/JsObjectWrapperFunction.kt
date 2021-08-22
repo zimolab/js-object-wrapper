@@ -16,7 +16,8 @@ package com.github.zimolab.jow.annotation.obj
     val skip: Boolean = SKIP,
     val undefinedAsNull: Boolean = UNDEFINED_AS_NULL,
     val raiseExceptionOnUndefined: Boolean = false,
-    val returnTypeCastor: String = RETURN_TYPE_CASTOR
+    val returnTypeCastor: String = RETURN_TYPE_CASTOR,
+    val argumentTypeCastor: String = ""
 ) {
     companion object {
         const val SKIP = false

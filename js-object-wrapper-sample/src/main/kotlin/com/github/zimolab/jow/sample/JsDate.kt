@@ -4,6 +4,7 @@ import com.github.zimolab.jow.annotation.obj.JsObjectWrapperClass
 import com.github.zimolab.jsarray.base.JsArray
 import com.github.zimolab.jsarray.base.JsArrayInterface
 import com.github.zimolab.jow.annotation.obj.JsObjectWrapperFunction
+import com.github.zimolab.jow.annotation.obj.JsObjectWrapperProperty
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.array.JsObjectWrapperArray
 import netscape.javascript.JSObject
@@ -12,6 +13,21 @@ import java.util.*
 
 @JsObjectWrapperClass
 interface JsDate: JsObjectWrapper {
+
+    val field1: Int
+    val field2: Int?
+    val field3: String
+    val field4: JSObject?
+    var field5: JsDate?
+    var field6: JsObjectWrapper?
+    @JsObjectWrapperProperty(getterTypeCast = JsObjectWrapperProperty.TYPE_CAST_USE_AUTO_GEN_CASTOR)
+    var field7: JsArrayInterface<Any?>?
+    var field8: Any?
+    var field9: List<String>
+    var field10: JsArray<String>
+    @JsObjectWrapperProperty(getterTypeCast = "castField11", setterTypeCast = JsObjectWrapperProperty.TYPE_CAST_NOT_APPLICABLE)
+    var field11: JsDateTime
+    var field12: Float
 
     /** Returns a String representation of a date. The format of the String depends on the locale. */
     override fun toString(): String
@@ -35,6 +51,7 @@ interface JsDate: JsObjectWrapper {
     fun test11(vararg dates: List<Double>)
     fun test12(vararg dates: Map<Key, Double>): JsArrayInterface<JsDateTimeImp?>
     fun test13(vararg dates: Collection<Any?>)
+    fun test16(vararg dates: JsArrayInterface<Any?>)
 
     // 暂时不支持函数泛型的解析和代码，以下代码将报错
     //fun <R> test14(vararg dates: Collection<Any?>)

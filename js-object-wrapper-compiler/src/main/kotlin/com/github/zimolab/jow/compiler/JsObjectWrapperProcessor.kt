@@ -2,10 +2,12 @@ package com.github.zimolab.jow.compiler
 
 import com.github.zimolab.jow.annotation.obj.JsObjectWrapperClass
 import com.github.zimolab.jow.annotation.obj.JsObjectWrapperFunction
+import com.github.zimolab.jow.annotation.obj.JsObjectWrapperProperty
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.compiler.generator.JsObjectWrapperClassGenerator
 import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperClass
 import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperFunction
+import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperProperty
 import com.google.devtools.ksp.getDeclaredFunctions
 import com.google.devtools.ksp.getDeclaredProperties
 import com.google.devtools.ksp.isAbstract
@@ -115,8 +117,11 @@ class JsObjectWrapperProcessor(
             val functionAnnotation = functionDeclaration.findAnnotations(JsObjectWrapperFunction::class).firstOrNull()
             resolvedClass.addFunction(ResolvedJsObjectWrapperFunction(functionDeclaration, functionAnnotation))
         }
+
         //TODO 解析全部属性
-        annotatedInterface.getDeclaredProperties().forEach {
+        annotatedInterface.getDeclaredProperties().forEach { propertyDeclaration->
+            val propertyAnnotation = propertyDeclaration.findAnnotations(JsObjectWrapperProperty::class).firstOrNull()
+            resolvedClass.addProperty(ResolvedJsObjectWrapperProperty(propertyDeclaration, propertyAnnotation))
         }
         return resolvedClass
     }

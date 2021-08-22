@@ -11,9 +11,9 @@ class ResolvedJsObjectWrapperClass(
 ) {
 
     val functions = mutableListOf<ResolvedJsObjectWrapperFunction>()
-    val fields = mutableListOf<ResolvedJsObjectWrapperField>()
+    val properties = mutableListOf<ResolvedJsObjectWrapperProperty>()
 
-    val resolver: JsObjectWrapperClassResolver = JsObjectWrapperClassResolver(originDeclaration, originAnnotation, options)
+    val resolver: ClassResolver = ClassResolver(originDeclaration, originAnnotation, options)
 
     val packageName by lazy {
         resolver.resolvePackageName()
@@ -43,8 +43,8 @@ class ResolvedJsObjectWrapperClass(
         MetaData()
     }
 
-    fun addField(resolvedField: ResolvedJsObjectWrapperField) {
-        fields.add(resolvedField)
+    fun addProperty(resolvedField: ResolvedJsObjectWrapperProperty) {
+        properties.add(resolvedField)
     }
 
     fun addFunction(resolvedFunction: ResolvedJsObjectWrapperFunction) {

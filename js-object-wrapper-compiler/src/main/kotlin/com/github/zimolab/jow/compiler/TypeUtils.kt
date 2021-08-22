@@ -1,11 +1,7 @@
-package com.github.zimolab.jow.compiler.resolver
+package com.github.zimolab.jow.compiler
 
 import com.github.zimolab.jsarray.base.JsArrayInterface
 import com.github.zimolab.jow.array.JsObjectWrapper
-import com.github.zimolab.jow.array.JsObjectWrapperArray
-import com.github.zimolab.jow.array.JsObjectWrapperArrayTemplate
-import com.github.zimolab.jow.compiler.qualifiedName
-import com.github.zimolab.jow.compiler.subclassOf
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import netscape.javascript.JSObject
@@ -36,7 +32,6 @@ object TypeUtils {
         Double::class.qualifiedName!!,
         String::class.qualifiedName!!,
         JSObject::class.qualifiedName!!,
-
         Boolean::class.qualifiedName!! + "?",
         Int::class.qualifiedName!! + "?",
         Double::class.qualifiedName!! + "?",
@@ -77,16 +72,19 @@ object TypeUtils {
     }
 
     fun isJsObjectWrapperType(type: KSType): Boolean {
-        return if (type.declaration is KSClassDeclaration) {
-            (type.declaration as KSClassDeclaration).subclassOf(JsObjectWrapper::class)
+        val declaration = type.declaration
+        return if (declaration is KSClassDeclaration) {
+            declaration.qualifiedNameStr == JsObjectWrapper::class.qualifiedName!! || declaration subclassOf JsObjectWrapper::class
         } else {
             false
         }
     }
 
     fun isJsArrayInterfaceType(type: KSType): Boolean {
-        return if (type.declaration is KSClassDeclaration) {
-            (type.declaration as KSClassDeclaration).subclassOf(JsArrayInterface::class)
+        val declaration = type.declaration
+        return if (declaration is KSClassDeclaration) {
+            declaration.qualifiedNameStr == JsArrayInterface::class.qualifiedName!! || declaration subclassOf JsArrayInterface::class
+
         } else {
             false
         }

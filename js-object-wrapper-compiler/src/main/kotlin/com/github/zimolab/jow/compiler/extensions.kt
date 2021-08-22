@@ -28,6 +28,10 @@ infix fun KSClassDeclaration.subclassOf(superclass: KClass<out Any>): Boolean {
     return this.getAllSuperTypes().any { it.declaration.qualifiedName?.asString() == superclass.qualifiedName }
 }
 
+infix fun KSClassDeclaration.subclassOf(superclassQualifiedName: String): Boolean {
+    return this.getAllSuperTypes().any { it.declaration.qualifiedName?.asString() == superclassQualifiedName }
+}
+
 fun KSAnnotated.findAnnotations(annotationType: KClass<out Annotation>) =
     this.annotations.filter {
         it.shortName.asString() == annotationType.simpleName
