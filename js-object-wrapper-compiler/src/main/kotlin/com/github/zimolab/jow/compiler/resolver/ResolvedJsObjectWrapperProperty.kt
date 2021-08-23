@@ -1,6 +1,7 @@
 package com.github.zimolab.jow.compiler.resolver
 
 import com.github.zimolab.jow.annotation.obj.JsObjectWrapperProperty
+import com.github.zimolab.jow.compiler.generator.TypeCast
 import com.github.zimolab.jow.compiler.simpleName
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
@@ -66,24 +67,12 @@ class ResolvedJsObjectWrapperProperty(
                 )
         }
 
-        val getterTypeCastor by lazy {
-            TypeCastor.forGetter(this@ResolvedJsObjectWrapperProperty)
+        val getterTypeCast by lazy {
+           TypeCast.ofProperty(false, this@ResolvedJsObjectWrapperProperty)
         }
 
-        val setterTypeCastorName by lazy {
-
-            resolver.resolveSetterTypeCastorName().let {
-                if (it == JsObjectWrapperProperty.TYPE_CAST_USE_AUTO_GEN_CASTOR) {
-                    if (nullable)
-                        "__cast${type.simpleName}Nullable__"
-                    else
-                        "__cast${type.simpleName}__"
-                } else if (it == JsObjectWrapperProperty.TYPE_CAST_USE_AS_OPERATOR) {
-                    null
-                } else {
-                    it
-                }
-            }
+        val setterTypeCast by lazy {
+            TypeCast.ofProperty(true, this@ResolvedJsObjectWrapperProperty)
         }
     }
 

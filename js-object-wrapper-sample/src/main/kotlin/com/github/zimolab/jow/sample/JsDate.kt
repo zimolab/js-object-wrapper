@@ -5,6 +5,8 @@ import com.github.zimolab.jsarray.base.JsArray
 import com.github.zimolab.jsarray.base.JsArrayInterface
 import com.github.zimolab.jow.annotation.obj.JsObjectWrapperFunction
 import com.github.zimolab.jow.annotation.obj.JsObjectWrapperProperty
+import com.github.zimolab.jow.annotation.obj.typecast.AUTO_DETERMINE
+import com.github.zimolab.jow.annotation.obj.typecast.NO_CAST
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.array.JsObjectWrapperArray
 import netscape.javascript.JSObject
@@ -20,12 +22,11 @@ interface JsDate: JsObjectWrapper {
     val field4: JSObject?
     var field5: JsDate?
     var field6: JsObjectWrapper?
-    @JsObjectWrapperProperty(getterTypeCast = JsObjectWrapperProperty.TYPE_CAST_USE_AUTO_GEN_CASTOR)
     var field7: JsArrayInterface<Any?>?
     var field8: Any?
+    @JsObjectWrapperProperty(getterTypeCast = AUTO_DETERMINE)
     var field9: List<String>
     var field10: JsArray<String>
-    @JsObjectWrapperProperty(getterTypeCast = "castField11", setterTypeCast = JsObjectWrapperProperty.TYPE_CAST_NOT_APPLICABLE)
     var field11: JsDateTime
     var field12: Float
 

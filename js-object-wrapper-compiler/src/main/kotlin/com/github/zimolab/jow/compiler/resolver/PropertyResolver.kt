@@ -55,11 +55,11 @@ class PropertyResolver(
     }
 
     fun resolveGetterTypeCastorName(): String {
-        return resolveAnnotationArgument(JsObjectWrapperProperty::getterTypeCast.name, JsObjectWrapperProperty.TYPE_CAST_USE_AUTO_GEN_CASTOR)
+        return resolveAnnotationArgument(JsObjectWrapperProperty::getterTypeCast.name, JsObjectWrapperProperty.DEFAULT_TYPE_CAST)
     }
 
-    fun resolveSetterTypeCastorName(): String {
-        return resolveAnnotationArgument(JsObjectWrapperProperty::setterTypeCast.name, JsObjectWrapperProperty.TYPE_CAST_USE_AUTO_GEN_CASTOR)
+    fun resolveSetterTypeCastCategory(): String {
+        return resolveAnnotationArgument(JsObjectWrapperProperty::setterTypeCast.name, JsObjectWrapperProperty.DEFAULT_TYPE_CAST)
     }
 
 }
