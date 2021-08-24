@@ -68,11 +68,11 @@ class ResolvedJsObjectWrapperProperty(
         }
 
         val getterTypeCast by lazy {
-           TypeCast.ofProperty(false, this@ResolvedJsObjectWrapperProperty)
+           TypeCast.ofGetter(this@ResolvedJsObjectWrapperProperty)
         }
 
         val setterTypeCast by lazy {
-            TypeCast.ofProperty(true, this@ResolvedJsObjectWrapperProperty)
+            TypeCast.ofSetter(this@ResolvedJsObjectWrapperProperty)
         }
     }
 

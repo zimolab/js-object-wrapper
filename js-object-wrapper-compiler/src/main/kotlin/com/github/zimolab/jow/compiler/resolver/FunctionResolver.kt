@@ -52,13 +52,8 @@ class FunctionResolver(
         return rt
     }
 
-    fun resolveReturnTypeCastor(): String? {
-        return resolveAnnotationArgument(JsObjectWrapperFunction::returnTypeCastor.name, JsObjectWrapperFunction.RETURN_TYPE_CASTOR).let {
-            if (it.equals("None", true) || it.isEmpty())
-                null
-            else
-                it
-        }
+    fun resolveReturnTypeCastCategory(): String {
+        return resolveAnnotationArgument(JsObjectWrapperFunction::returnTypeCast.name, JsObjectWrapperFunction.DEFAULT_RETURN_TYPE_CAST)
     }
 
     inline fun <reified T> resolveAnnotationArgument(argumentName: String, defaultValue: T): T {

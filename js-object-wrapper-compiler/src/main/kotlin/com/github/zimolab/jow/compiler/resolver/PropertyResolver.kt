@@ -54,7 +54,7 @@ class PropertyResolver(
         }
     }
 
-    fun resolveGetterTypeCastorName(): String {
+    fun resolveGetterTypeCastCategory(): String {
         return resolveAnnotationArgument(JsObjectWrapperProperty::getterTypeCast.name, JsObjectWrapperProperty.DEFAULT_TYPE_CAST)
     }
 

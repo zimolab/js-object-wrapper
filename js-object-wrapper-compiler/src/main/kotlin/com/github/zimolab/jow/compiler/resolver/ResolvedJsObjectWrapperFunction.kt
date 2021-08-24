@@ -1,6 +1,7 @@
 package com.github.zimolab.jow.compiler.resolver;
 
 import com.github.zimolab.jow.annotation.obj.JsObjectWrapperFunction
+import com.github.zimolab.jow.compiler.generator.TypeCast
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSType
@@ -9,7 +10,7 @@ class ResolvedJsObjectWrapperFunction(
     val originDeclaration: KSFunctionDeclaration,
     val originAnnotation: KSAnnotation?
 ) {
-    private val resolver = FunctionResolver(originDeclaration, originAnnotation)
+    val resolver = FunctionResolver(originDeclaration, originAnnotation)
 
     data class FunctionParameter(
         val name: String,
@@ -57,12 +58,8 @@ class ResolvedJsObjectWrapperFunction(
             resolver.resolveAnnotationArgument(JsObjectWrapperFunction::jsMemberName.name, simpleName).ifEmpty { simpleName }
         }
 
-        var returnTypeCastor: String? = resolver.resolveReturnTypeCastor()
-            set(value) {
-                field = if (value.equals("None", true) || value == "")
-                    null
-                else
-                    value
-            }
+        val returnTypeCast by lazy {
+            TypeCast.ofFunctionReturn(this@ResolvedJsObjectWrapperFunction)
+        }
     }
 }

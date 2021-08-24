@@ -1,5 +1,6 @@
 package com.github.zimolab.jow.annotation.obj
 
+import com.github.zimolab.jow.annotation.obj.typecast.AUTO_DETERMINE
 
 
 /**
@@ -16,13 +17,13 @@ package com.github.zimolab.jow.annotation.obj
     val skip: Boolean = SKIP,
     val undefinedAsNull: Boolean = UNDEFINED_AS_NULL,
     val raiseExceptionOnUndefined: Boolean = false,
-    val returnTypeCastor: String = RETURN_TYPE_CASTOR,
+    val returnTypeCast: String = DEFAULT_RETURN_TYPE_CAST,
     val argumentTypeCastor: String = ""
 ) {
     companion object {
         const val SKIP = false
         const val UNDEFINED_AS_NULL = true
         const val RAISE_EXCEPTION_ON_UNDEFINED = false
-        const val RETURN_TYPE_CASTOR = "None"
+        const val DEFAULT_RETURN_TYPE_CAST = AUTO_DETERMINE
     }
 }

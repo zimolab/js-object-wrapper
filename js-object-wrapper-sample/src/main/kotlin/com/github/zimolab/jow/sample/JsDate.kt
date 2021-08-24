@@ -39,7 +39,7 @@ interface JsDate: JsObjectWrapper {
 
     @JsObjectWrapperFunction(undefinedAsNull = true)
     fun test1(): Unit
-    @JsObjectWrapperFunction(returnTypeCastor = "__asJsDate__")
+    @JsObjectWrapperFunction(returnTypeCast = "__asJsDate__")
     fun test2(a: JsDateTime, b: JsDateTimeImp, c: Any, d: JsDate, vararg dates: JsDate): JsDateTimeImp
     fun test3(a: Int, b: JSObject?, c: Any, d: JsDate?, vararg dates: JsDate?)
     fun test4(a: Int, b: JsArray<Any?>, d: JsObjectWrapperArray<JsDate>?, vararg dates: Int)
@@ -52,7 +52,7 @@ interface JsDate: JsObjectWrapper {
     fun test11(vararg dates: List<Double>)
     fun test12(vararg dates: Map<Key, Double>): JsArrayInterface<JsDateTimeImp?>
     fun test13(vararg dates: Collection<Any?>)
-    fun test16(vararg dates: JsArrayInterface<Any?>)
+    fun test16(vararg dates: JsArrayInterface<Any?>): JsArrayInterface<JsDate>
 
     // 暂时不支持函数泛型的解析和代码，以下代码将报错
     //fun <R> test14(vararg dates: Collection<Any?>)

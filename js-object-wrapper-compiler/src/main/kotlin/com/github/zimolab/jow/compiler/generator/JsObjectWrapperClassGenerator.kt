@@ -72,7 +72,6 @@ class JsObjectWrapperClassGenerator(
             return when (mapPart) {
                 null -> {
                     val logger = Logger.getLogger(JsObjectWrapperProcessor::class.java.canonicalName)
-                    logger.debug("arg type: ${argument.type}")
                     if (TypeUtils.hasToTypedArrayFunction(argument.type)) {
                         "*(${arg}.toTypedArray())"
                     } else {
@@ -338,23 +337,6 @@ class JsObjectWrapperClassGenerator(
             return propertyBuilder.build()
         }
 
-        private fun createTypeCastor(
-            typeCastorName: String,
-            argumentType: TypeName,
-            returnType: TypeName,
-            classBuilder: TypeSpec.Builder
-        ) {
-            if (classBuilder.funSpecs.firstOrNull { it.name == typeCastorName } != null)
-                return
-            val typeCastor = FunSpec
-                .builder(typeCastorName)
-                .addModifiers(KModifier.ABSTRACT)
-                .addParameter("originReturn", argumentType)
-                .returns(returnType)
-                .build()
-            classBuilder.addFunction(typeCastor)
-        }
-
         private fun createFunctions(classBuilder: TypeSpec.Builder) {
             val funSpecs = resolvedClass.functions.filter { !it.meta.skipped }.map { createFunction(it, classBuilder) }
             classBuilder.addFunctions(funSpecs)
@@ -430,15 +412,19 @@ class JsObjectWrapperClassGenerator(
             val isAnyType = TypeUtils.isAnyType(functionReturnType)
             val undefinedAsNull = resolvedFunction.meta.undefinedAsNull
 
-            // 如果返回值不是支持直接转换的本地类型，则需要额外添加一个类型转换函数（模板方法），用来对返回值进行转换
-            // 该类型转换函数的名称可以在注解中以returnTypeCastor参数进行指定，如果未指定名称（returnTypeCastor=“None”||returnTypeCastor=“”），
-            // 则使用默认规则自动生成一个名称，名称生成规则为：__as${returnType}__
-            if (!isNativeType && !isVoidType && !isAnyType) {
-                if (resolvedFunction.meta.returnTypeCastor == null)
-                    resolvedFunction.meta.returnTypeCastor = "__as${functionReturnType.simpleName}__"
-                createReturnTypeCastor(resolvedFunction.meta.returnTypeCastor, functionReturnType, classBuilder)
+            // 如果返回值不是支持直接转换的原生类型，则需要添加一个额外的类型转换函数（模板方法），用来对返回值进行转换
+//            if (!isNativeType && !isVoidType && !isAnyType) {
+//                if (resolvedFunction.meta.returnTypeCastor == null)
+//                    resolvedFunction.meta.returnTypeCastor = "__as${functionReturnType.simpleName}__"
+//                createReturnTypeCastor(resolvedFunction.meta.returnTypeCastor, functionReturnType, classBuilder)
+//            }
+//            val returnTypeCastor = resolvedFunction.meta.returnTypeCastor
+            val returnTypeCastFunc = resolvedFunction.meta.returnTypeCast.typeCastFunctionName
+            if (resolvedFunction.meta.returnTypeCast.category == TypeCastMethod.CAST_FUNCTION) {
+                if (classBuilder.funSpecs.firstOrNull{ it.name==returnTypeCastFunc && it.parameters.size == 1 } == null) {
+                    classBuilder.addFunction(TypeCast.createReturnTypeCastFunction(returnTypeCastFunc, "arg", resolvedFunction))
+                }
             }
-            val returnTypeCastor = resolvedFunction.meta.returnTypeCastor
 
             val codeTemplate = """
                 val ret = ${JsObjectWrapper::source.name}.call(%S, %L)
@@ -468,7 +454,7 @@ class JsObjectWrapperClassGenerator(
                     "if(ret !is %T)\n throw RuntimeException(\"the type of return value is not as expected.\")\n" +
                             "return ret"
                 else
-                    "return ${returnTypeCastor}(ret)"
+                    "return ${returnTypeCastFunc}(ret)"
             }
             """
 
