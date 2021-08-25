@@ -11,9 +11,9 @@ import com.google.devtools.ksp.symbol.KSFile
 import com.google.devtools.ksp.symbol.KSType
 
 class ClassResolver(
-    val declaration: KSClassDeclaration,
-    val annotation: KSAnnotation?,
-    val options: Map<String, String>
+    private val declaration: KSClassDeclaration,
+    private val annotation: KSAnnotation?,
+    private val options: Map<String, String>
 ) {
 
     companion object {
@@ -77,10 +77,10 @@ class ClassResolver(
     }
 
     fun resolveClassComment(): String {
-        return resolveAnnotationArgument(JsObjectClass::classComment.name, "")
+        return resolveAnnotationArgument(JsObjectClass::classDoc.name, "")
     }
 
-    inline fun <reified T> resolveAnnotationArgument(argumentName: String, defaultValue: T): T {
+    private inline fun <reified T> resolveAnnotationArgument(argumentName: String, defaultValue: T): T {
         return if (annotation == null)
             defaultValue
         else

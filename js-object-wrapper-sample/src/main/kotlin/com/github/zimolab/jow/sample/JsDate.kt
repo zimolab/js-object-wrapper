@@ -6,13 +6,11 @@ import com.github.zimolab.jsarray.base.JsArrayInterface
 import com.github.zimolab.jow.annotation.obj.JsObjectFunction
 import com.github.zimolab.jow.annotation.obj.JsObjectParameter
 import com.github.zimolab.jow.annotation.obj.JsObjectProperty
-import com.github.zimolab.jow.annotation.obj.typecast.AUTO_DETERMINE
-import com.github.zimolab.jow.annotation.obj.typecast.AUTO_GEN
-import com.github.zimolab.jow.annotation.obj.typecast.NO_CAST
+import com.github.zimolab.jow.annotation.obj.typecast.TypeCastStrategyConstants.AUTO_DETERMINE
+import com.github.zimolab.jow.annotation.obj.typecast.TypeCastStrategyConstants.AUTO_GENERATE
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.array.JsObjectWrapperArray
 import netscape.javascript.JSObject
-import java.security.Key
 import java.util.*
 
 @JsObjectClass
@@ -29,7 +27,6 @@ interface JsDate: JsObjectWrapper {
     @JsObjectProperty(getterTypeCast = AUTO_DETERMINE)
     var field9: List<String>
     var field10: JsArray<String>
-    var field11: JsDateTime
     var field12: Float
 
     /** Returns a String representation of a date. The format of the String depends on the locale. */
@@ -42,17 +39,17 @@ interface JsDate: JsObjectWrapper {
     @JsObjectFunction(undefinedAsNull = true)
     fun test1(): Unit
     @JsObjectFunction(returnTypeCast = "__asJsDate__")
-    fun test2(a: JsDateTime, b: JsDateTimeImp, c: Any, d: JsDate, vararg dates: JsDate): JsDateTimeImp
+    //fun test2(a: JsDateTime, b: JsDateTimeImp, c: Any, d: JsDate, vararg dates: JsDate): JsDateTimeImp
     fun test3(a: Int, b: JSObject?, c: Any, d: JsDate?, vararg dates: JsDate?)
     fun test4(a: Int, b: JsArray<Any?>, d: JsObjectWrapperArray<JsDate>?, vararg dates: Int)
-    fun test5(@JsObjectParameter(AUTO_GEN) b: JsArray<Any?>?, d: JsObjectWrapperArray<JsDate>?, @JsObjectParameter(typeCast = AUTO_DETERMINE) vararg dates: Date?)
+    fun test5(@JsObjectParameter(AUTO_GENERATE) b: JsArray<Any?>?, d: JsObjectWrapperArray<JsDate>?, @JsObjectParameter(typeCast = AUTO_DETERMINE) vararg dates: Date?)
     fun test6(b: JsArray<Any?>?, d: JsObjectWrapperArray<JsDate>?, vararg dates: Int?)
     fun test7(vararg dates: JSObject)
     fun test8(vararg dates: JsDate)
     fun test9(vararg dates: JsArray<Any?>)
-    fun test10(vararg dates: JsObjectWrapperArray<JsDateTimeImp?>)
+    //fun test10(vararg dates: JsObjectWrapperArray<JsDateTimeImp?>)
     fun test11(vararg dates: List<Double>)
-    fun test12(vararg dates: Map<Key, Double>): JsArrayInterface<JsDateTimeImp?>
+    //fun test12(vararg dates: Map<Key, Double>): JsArrayInterface<JsDateTimeImp?>
     fun test13(vararg dates: Collection<Any?>)
     fun test16(vararg dates: JsArrayInterface<Any?>): JsArrayInterface<JsDate>
 

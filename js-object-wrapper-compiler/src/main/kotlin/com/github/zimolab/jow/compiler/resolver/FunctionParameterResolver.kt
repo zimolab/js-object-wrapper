@@ -1,18 +1,20 @@
 package com.github.zimolab.jow.compiler.resolver
 
-import com.github.zimolab.jow.annotation.obj.JsObjectFunction
 import com.github.zimolab.jow.annotation.obj.JsObjectParameter
-import com.github.zimolab.jow.annotation.obj.typecast.TypeCastCategory
-import com.github.zimolab.jow.compiler.*
-import com.github.zimolab.jow.compiler.generator.TypeCast
+import com.github.zimolab.jow.annotation.obj.typecast.TypeCastStrategy
+import com.github.zimolab.jow.compiler.AnnotationProcessingError
+import com.github.zimolab.jow.compiler.JsObjectWrapperProcessor
+import com.github.zimolab.jow.compiler.error
+import com.github.zimolab.jow.compiler.findArgument
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSValueParameter
 import java.util.logging.Logger
 
+@ExperimentalUnsignedTypes
 class FunctionParameterResolver(
-    val declaration: KSValueParameter,
-    val annotation: KSAnnotation?
+    private val declaration: KSValueParameter,
+    private val annotation: KSAnnotation?
 ) {
     private val logger = Logger.getLogger(JsObjectWrapperProcessor::class.java.canonicalName)
 
@@ -33,21 +35,21 @@ class FunctionParameterResolver(
         return declaration.isVararg
     }
 
-    inline fun <reified T> resolveAnnotationArgument(argumentName: String, defaultValue: T): T {
+    private inline fun <reified T> resolveAnnotationArgument(argumentName: String, defaultValue: T): T {
         return if (annotation == null)
             defaultValue
         else
             annotation.findArgument(argumentName, defaultValue)
     }
 
-    fun resolveTypeCastCategory(): TypeCastCategory {
-        val category = resolveAnnotationArgument(JsObjectParameter::typeCast.name, JsObjectParameter.DEFAULT_TYPE_CAST)
+    fun resolveTypeCastCategory(): TypeCastStrategy {
+        val category = resolveAnnotationArgument(JsObjectParameter::typeCast.name, JsObjectParameter.DEFAULT_TYPE_CAST_STRATEGY)
         category.ifEmpty {
             AnnotationProcessingError("@${JsObjectParameter::class.simpleName}注解的的${JsObjectParameter::typeCast.name}参数不可为空").let {
                 logger.error(it, throws = false)
                 throw it
             }
         }
-        return TypeCastCategory.of(category)
+        return TypeCastStrategy.of(category)
     }
 }

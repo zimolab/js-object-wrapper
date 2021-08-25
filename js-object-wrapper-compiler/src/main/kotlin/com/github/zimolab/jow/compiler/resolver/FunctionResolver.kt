@@ -2,9 +2,8 @@ package com.github.zimolab.jow.compiler.resolver
 
 import com.github.zimolab.jow.annotation.obj.JsObjectFunction
 import com.github.zimolab.jow.annotation.obj.JsObjectParameter
-import com.github.zimolab.jow.annotation.obj.typecast.TypeCastCategory
+import com.github.zimolab.jow.annotation.obj.typecast.TypeCastStrategy
 import com.github.zimolab.jow.compiler.*
-import com.github.zimolab.jow.compiler.generator.TypeCast
 import com.github.zimolab.jow.compiler.qualifiedNameStr
 import com.github.zimolab.jow.compiler.simpleNameStr
 import com.google.devtools.ksp.symbol.KSAnnotation
@@ -67,15 +66,15 @@ class FunctionResolver(
         return rt
     }
 
-    fun resolveReturnTypeCastCategory(): TypeCastCategory {
-        val category = resolveAnnotationArgument(JsObjectFunction::returnTypeCast.name, JsObjectFunction.DEFAULT_RETURN_TYPE_CAST)
+    fun resolveReturnTypeCastCategory(): TypeCastStrategy {
+        val category = resolveAnnotationArgument(JsObjectFunction::returnTypeCast.name, JsObjectFunction.DEFAULT_RETURN_TYPE_CAST_STRATEGY)
         category.ifEmpty {
             AnnotationProcessingError("@${JsObjectFunction::class.simpleName}注解的${JsObjectFunction::returnTypeCast.name}参数不可为空").let {
                 logger.error(it, throws = false)
                 throw it
             }
         }
-        return TypeCastCategory.of(category)
+        return TypeCastStrategy.of(category)
     }
 
     inline fun <reified T> resolveAnnotationArgument(argumentName: String, defaultValue: T): T {

@@ -70,7 +70,7 @@ class ResolvedClass(
         }
 
         val ignoreUnsupportedTypes by lazy {
-           resolver.resolveAnnotationArgument(JsObjectClass::ignoreUnsupportedTypes.name, JsObjectClass.IGNORE_UNSUPPORTED_TYPES)
+
         }
 
     }

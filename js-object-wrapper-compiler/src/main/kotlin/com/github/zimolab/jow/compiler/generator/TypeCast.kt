@@ -5,8 +5,6 @@ import com.github.zimolab.jow.annotation.obj.JsObjectProperty
 import com.github.zimolab.jow.annotation.obj.typecast.*
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.compiler.*
-import com.github.zimolab.jow.compiler.generator.TypeCast.BuiltinTypeCastFunctions.JS_ARRAY_INTERFACE_SETTER_CAST_FUNC
-import com.github.zimolab.jow.compiler.generator.TypeCast.BuiltinTypeCastFunctions.JS_OBJECT_WRAPPER_SETTER_CAST_FUNC
 import com.github.zimolab.jow.compiler.generator.TypeCast.BuiltinTypeCastFunctions.getBuiltinTypeCastFunction
 import com.github.zimolab.jow.compiler.resolver.ResolvedFunction
 import com.github.zimolab.jow.compiler.resolver.ResolvedFunctionParameter
@@ -33,6 +31,7 @@ enum class TypeCastTarget {
 }
 
 
+@Suppress("unused")
 @ExperimentalUnsignedTypes
 class TypeCast private constructor(
     val typeCastMethod: TypeCastMethod,
@@ -46,11 +45,11 @@ class TypeCast private constructor(
         private set
 
     /**
-     * 内置类型转换函数
+     * 为某些类型定义的内置类型转换函数
      */
     object BuiltinTypeCastFunctions {
         // func __castJsObjectWrapper__(arg: JsObjectWrapper?): JsObject? = arg?.source
-        val JS_OBJECT_WRAPPER_SETTER_CAST_FUNC =
+        private val JS_OBJECT_WRAPPER_SETTER_CAST_FUNC =
             createTypeCastFunction(
                 functionName = "__cast${JsObjectWrapper::class.simpleName!!}__",
                 parameterName = "arg",
@@ -60,7 +59,7 @@ class TypeCast private constructor(
             )
 
         // func __castJsArray__(arg: JsArrayInterface<Any?>?): JsObject? = arg?.reference
-        val JS_ARRAY_INTERFACE_SETTER_CAST_FUNC =
+        private val JS_ARRAY_INTERFACE_SETTER_CAST_FUNC =
             createTypeCastFunction(
                 functionName = "__cast${JsArrayInterface::class.simpleName!!}__",
                 parameterName = "arg",
@@ -84,10 +83,10 @@ class TypeCast private constructor(
     companion object {
         private val logger: Logger = Logger.getLogger(JsObjectWrapperProcessor::class.java.canonicalName)
 
-        val GETTER_CAST_FUNC_PARAM_TYPE = Any::class.asTypeName().copy(nullable = true)
-        val SETTER_CAST_FUNC_RETURN_TYPE = Any::class.asTypeName().copy(nullable = true)
-        val FUNC_RETURN_CAST_FUNC_PARAM_TYPE = Any::class.asTypeName().copy(nullable = true)
-        val FUNC_PARAM_CAST_FUNC_RETURN_TYPE = Any::class.asTypeName().copy(nullable = true)
+        private val GETTER_CAST_FUNC_PARAM_TYPE = Any::class.asTypeName().copy(nullable = true)
+        private val SETTER_CAST_FUNC_RETURN_TYPE = Any::class.asTypeName().copy(nullable = true)
+        private val FUNC_RETURN_CAST_FUNC_PARAM_TYPE = Any::class.asTypeName().copy(nullable = true)
+        private val FUNC_PARAM_CAST_FUNC_RETURN_TYPE = Any::class.asTypeName().copy(nullable = true)
 
         fun of(target: TypeCastTarget, targetObj: Any, classBuilder: TypeSpec.Builder): TypeCast {
             when (target) {
@@ -181,12 +180,12 @@ class TypeCast private constructor(
             }
         }
 
-        fun ofSetter(property: ResolvedProperty): TypeCast {
+        private fun ofSetter(property: ResolvedProperty): TypeCast {
             val category = property.meta.setterTypeCastCategory
             val nativeType = property.meta.isNativeType
 
             return when (category) {
-                is TypeCastCategory.AutoDetermine -> {
+                is TypeCastStrategy.AutoDetermine -> {
                     if (nativeType) {
                         TypeCast(
                             typeCastMethod = TypeCastMethod.NO_CAST,
@@ -217,7 +216,7 @@ class TypeCast private constructor(
                     }
                 }
 
-                is TypeCastCategory.NoCast -> {
+                is TypeCastStrategy.NoCast -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.NO_CAST,
                         target = TypeCastTarget.PROP_SETTER,
@@ -227,7 +226,7 @@ class TypeCast private constructor(
                     )
                 }
 
-                is TypeCastCategory.AutoGenerate -> {
+                is TypeCastStrategy.AutoGenerate -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.CAST_FUNCTION,
                         target = TypeCastTarget.PROP_SETTER,
@@ -237,7 +236,7 @@ class TypeCast private constructor(
                     )
                 }
 
-                is TypeCastCategory.NoCastExceptBuiltin -> {
+                is TypeCastStrategy.NoCastExceptBuiltin -> {
                     val builtinFunc = getBuiltinTypeCastFunction(property.type)
                     if (builtinFunc == null) {
                         TypeCast(
@@ -258,7 +257,7 @@ class TypeCast private constructor(
                     }
                 }
 
-                is TypeCastCategory.UserSpecify -> {
+                is TypeCastStrategy.UserSpecify -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.CAST_FUNCTION,
                         target = TypeCastTarget.PROP_SETTER,
@@ -270,11 +269,11 @@ class TypeCast private constructor(
             }
         }
 
-        fun ofGetter(property: ResolvedProperty): TypeCast {
+        private fun ofGetter(property: ResolvedProperty): TypeCast {
             val category = property.meta.getterTypeCastCategory
             val nativeType = property.meta.isNativeType
             return when (category) {
-                is TypeCastCategory.AutoDetermine -> {
+                is TypeCastStrategy.AutoDetermine -> {
                     // getter无内置的类型转换函数
                     if (nativeType) {
                          TypeCast(
@@ -294,7 +293,7 @@ class TypeCast private constructor(
                         )
                 }
 
-                is TypeCastCategory.NoCast -> {
+                is TypeCastStrategy.NoCast -> {
                     if (nativeType) {
                         TypeCast(
                             typeCastMethod = TypeCastMethod.NO_CAST,
@@ -305,7 +304,7 @@ class TypeCast private constructor(
                         )
                     } else {
                         AnnotationProcessingError(
-                            "NO_CAST(${NO_CAST})不适用于非原生类型属性"
+                            "${category.name}不适用于非原生类型属性"
                         ).let {
                             logger.error(it, throws = false)
                             throw it
@@ -313,7 +312,7 @@ class TypeCast private constructor(
                     }
                 }
 
-                is TypeCastCategory.AutoGenerate -> {
+                is TypeCastStrategy.AutoGenerate -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.CAST_FUNCTION,
                         target = TypeCastTarget.PROP_GETTER,
@@ -322,14 +321,14 @@ class TypeCast private constructor(
                         isBuiltinFunction = false
                     )
                 }
-                is TypeCastCategory.NoCastExceptBuiltin -> {
+                is TypeCastStrategy.NoCastExceptBuiltin -> {
                     AnnotationProcessingError("${category.name}不适用于${JsObjectProperty::getterTypeCast.name}参数").let {
                         logger.error(it, throws = false)
                         throw it
                     }
                 }
 
-                is TypeCastCategory.UserSpecify -> {
+                is TypeCastStrategy.UserSpecify -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.CAST_FUNCTION,
                         target = TypeCastTarget.PROP_GETTER,
@@ -341,12 +340,12 @@ class TypeCast private constructor(
             }
         }
 
-        fun ofFunctionParameter(parameter: ResolvedFunctionParameter): TypeCast {
+        private fun ofFunctionParameter(parameter: ResolvedFunctionParameter): TypeCast {
             val category = parameter.meta.typeCastCategory
             val nativeType = parameter.meta.isNativeType
 
             return when (category) {
-                is TypeCastCategory.AutoDetermine -> {
+                is TypeCastStrategy.AutoDetermine -> {
                     if (nativeType) {
                         TypeCast(
                             typeCastMethod = TypeCastMethod.NO_CAST,
@@ -377,7 +376,7 @@ class TypeCast private constructor(
                     }
                 }
 
-                is TypeCastCategory.NoCast -> {
+                is TypeCastStrategy.NoCast -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.NO_CAST,
                         target = TypeCastTarget.FUNC_PARAMETER,
@@ -387,7 +386,7 @@ class TypeCast private constructor(
                     )
                 }
 
-                is TypeCastCategory.AutoGenerate -> {
+                is TypeCastStrategy.AutoGenerate -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.CAST_FUNCTION,
                         target = TypeCastTarget.FUNC_PARAMETER,
@@ -397,7 +396,7 @@ class TypeCast private constructor(
                     )
                 }
 
-                is TypeCastCategory.NoCastExceptBuiltin -> {
+                is TypeCastStrategy.NoCastExceptBuiltin -> {
                     val builtinFunc = getBuiltinTypeCastFunction(parameter.type)
                     if (builtinFunc == null) {
                         TypeCast(
@@ -418,7 +417,7 @@ class TypeCast private constructor(
                     }
                 }
 
-                is TypeCastCategory.UserSpecify -> {
+                is TypeCastStrategy.UserSpecify -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.CAST_FUNCTION,
                         target = TypeCastTarget.FUNC_PARAMETER,
@@ -430,14 +429,14 @@ class TypeCast private constructor(
             }
         }
 
-        fun ofFunctionReturn(func: ResolvedFunction): TypeCast {
+        private fun ofFunctionReturn(func: ResolvedFunction): TypeCast {
             val category = func.meta.returnTypeCastCategory
             val nativeType =
                 TypeUtils.isNativeType(func.returnType) || TypeUtils.isVoidType(func.returnType) || TypeUtils.isAnyType(
                     func.returnType
                 )
             return when (category) {
-                is TypeCastCategory.AutoDetermine -> {
+                is TypeCastStrategy.AutoDetermine -> {
                     if (nativeType) {
                         TypeCast(
                             typeCastMethod = TypeCastMethod.NO_CAST,
@@ -456,7 +455,7 @@ class TypeCast private constructor(
                         )
                     }
                 }
-                is TypeCastCategory.AutoGenerate -> {
+                is TypeCastStrategy.AutoGenerate -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.CAST_FUNCTION,
                         target = TypeCastTarget.FUNC_RETURN,
@@ -465,7 +464,7 @@ class TypeCast private constructor(
                         isBuiltinFunction = false
                     )
                 }
-                is TypeCastCategory.NoCast -> {
+                is TypeCastStrategy.NoCast -> {
                     if (!nativeType) {
                         AnnotationProcessingError("${category.name}不适用于${func.returnType.simpleName}类型的返回值").let {
                             logger.error(it)
@@ -479,13 +478,13 @@ class TypeCast private constructor(
                         isBuiltinFunction = false
                     )
                 }
-                is TypeCastCategory.NoCastExceptBuiltin -> {
+                is TypeCastStrategy.NoCastExceptBuiltin -> {
                     AnnotationProcessingError("${category.name}不适用于${JsObjectFunction::returnTypeCast.name}参数").let {
                         logger.error(it, throws = false)
                         throw it
                     }
                 }
-                is TypeCastCategory.UserSpecify -> {
+                is TypeCastStrategy.UserSpecify -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.CAST_FUNCTION,
                         target = TypeCastTarget.FUNC_RETURN,
@@ -525,7 +524,7 @@ class TypeCast private constructor(
          * @param suffix String
          * @return String
          */
-        fun generateTypeCastFunctionName(
+        private fun generateTypeCastFunctionName(
             target: TypeCastTarget,
             targetObj: Any,
             prefix: String = "",
@@ -582,7 +581,7 @@ class TypeCast private constructor(
                 }
             }
         }
-        
+
         fun createTypeCastFunction(
             functionName: String,
             parameterName: String,
@@ -618,7 +617,7 @@ class TypeCast private constructor(
 
         // setter使用的类型转换函数符合以下定义:
         // 包含1个入参，入参类型与属性类型一致，返回值类型为Any?
-        fun createSetterCastFunction(
+        private fun createSetterCastFunction(
             funcName: String,
             parameterName: String,
             property: ResolvedProperty,
@@ -637,7 +636,7 @@ class TypeCast private constructor(
 
         // getter使用的类型转换函数符合以下定义:
         // 包含1个入参，入参类型Any?，返回值类型则与属性类型一致
-        fun createGetterCastFunction(
+        private fun createGetterCastFunction(
             funcName: String,
             parameterName: String,
             property: ResolvedProperty,
@@ -654,7 +653,7 @@ class TypeCast private constructor(
             )
         }
 
-        fun createReturnTypeCastFunction(
+        private fun createReturnTypeCastFunction(
             funcName: String,
             parameterName: String,
             func: ResolvedFunction,
@@ -671,7 +670,7 @@ class TypeCast private constructor(
             )
         }
 
-        fun createParameterTypeCastFunction(
+        private fun createParameterTypeCastFunction(
             funcName: String,
             parameterName: String,
             parameter: ResolvedFunctionParameter,

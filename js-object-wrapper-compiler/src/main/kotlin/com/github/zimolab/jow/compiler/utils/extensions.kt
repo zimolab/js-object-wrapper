@@ -227,18 +227,13 @@ fun Logger.shutdown() {
     }
 }
 
-val logger = Logger.getLogger(JsObjectWrapperProcessor::class.java.canonicalName)
-
 fun TypeSpec.Builder.findFunction(funcName: String, vararg parameterTypes: TypeName): FunSpec? {
     val func = this.funSpecs.firstOrNull { it.name ==  funcName} ?: return null
     if (func.parameters.size != parameterTypes.size)
         return null
-    logger.debug("findFunction($funcName, ${parameterTypes.joinToString(",")}):")
     parameterTypes.forEachIndexed { index, typeName ->
-        logger.debug("$typeName == ${func.parameters[index].type}")
         if(!(typeName == func.parameters[index].type || typeName.copy(nullable = true) == func.parameters[index].type))
             return null
     }
-    logger.debug("\n\n")
     return func
 }

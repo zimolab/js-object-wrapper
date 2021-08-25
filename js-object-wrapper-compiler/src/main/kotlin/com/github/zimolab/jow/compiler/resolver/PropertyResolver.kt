@@ -1,7 +1,7 @@
 package com.github.zimolab.jow.compiler.resolver
 
 import com.github.zimolab.jow.annotation.obj.JsObjectProperty
-import com.github.zimolab.jow.annotation.obj.typecast.TypeCastCategory
+import com.github.zimolab.jow.annotation.obj.typecast.TypeCastStrategy
 import com.github.zimolab.jow.compiler.*
 import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.symbol.KSAnnotation
@@ -9,6 +9,7 @@ import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import java.util.logging.Logger
 
+@ExperimentalUnsignedTypes
 class PropertyResolver(
     val declaration: KSPropertyDeclaration,
     val annotation: KSAnnotation?
@@ -57,9 +58,9 @@ class PropertyResolver(
         }
     }
 
-    fun resolveGetterTypeCastCategory(): TypeCastCategory {
+    fun resolveGetterTypeCastCategory(): TypeCastStrategy {
         val category =
-            resolveAnnotationArgument(JsObjectProperty::getterTypeCast.name, JsObjectProperty.DEFAULT_TYPE_CAST)
+            resolveAnnotationArgument(JsObjectProperty::getterTypeCast.name, JsObjectProperty.DEFAULT_TYPE_CAST_STRATEGY)
         category.ifEmpty {
             AnnotationProcessingError(
                 "@${JsObjectProperty::class.simpleName}注解的${JsObjectProperty::getterTypeCast.name}参数不可为空"
@@ -67,12 +68,12 @@ class PropertyResolver(
                 logger.error(it)
             }
         }
-        return TypeCastCategory.of(category)
+        return TypeCastStrategy.of(category)
     }
 
-    fun resolveSetterTypeCastCategory(): TypeCastCategory {
+    fun resolveSetterTypeCastCategory(): TypeCastStrategy {
         val category =
-            resolveAnnotationArgument(JsObjectProperty::setterTypeCast.name, JsObjectProperty.DEFAULT_TYPE_CAST)
+            resolveAnnotationArgument(JsObjectProperty::setterTypeCast.name, JsObjectProperty.DEFAULT_TYPE_CAST_STRATEGY)
         category.ifEmpty {
             AnnotationProcessingError(
                 "@${JsObjectProperty::class.simpleName}注解的${JsObjectProperty::setterTypeCast.name}参数不可为空"
@@ -80,7 +81,7 @@ class PropertyResolver(
                 logger.error(it)
             }
         }
-        return TypeCastCategory.of(category)
+        return TypeCastStrategy.of(category)
     }
 
 }

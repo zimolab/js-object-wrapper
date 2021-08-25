@@ -1,16 +1,22 @@
 package com.github.zimolab.jow.annotation.obj
 
+/**
+ * @property outputClassName String
+ * @property outputFilename String
+ * @property outputFileEncoding String
+ * @property primaryConstructor String
+ * @property classDoc String
+ * @constructor
+ */
 @Target(AnnotationTarget.CLASS)
 annotation class JsObjectClass(
     val outputClassName: String = "",
     val outputFilename: String = "",
-    val ignoreUnsupportedTypes: Boolean = true,
     val outputFileEncoding: String = DEFAULT_OUTPUT_ENCODING,
     val primaryConstructor: String = DEFAULT_PRIMARY_CONSTRUCTOR,
-    val classComment: String = ""
+    val classDoc: String = ""
 ) {
     companion object {
-        const val IGNORE_UNSUPPORTED_TYPES = true
         const val DEFAULT_OUTPUT_ENCODING = "UTF-8"
         const val DEFAULT_PRIMARY_CONSTRUCTOR = PrimaryConstructor.WithParameter
     }
