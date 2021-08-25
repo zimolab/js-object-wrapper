@@ -9,7 +9,7 @@ import com.github.zimolab.jow.annotation.obj.JsObjectProperty
 import com.github.zimolab.jow.annotation.obj.typemapping.TypeMappingStrategy.Companion.AUTO_DETERMINE
 import com.github.zimolab.jow.annotation.obj.typemapping.TypeMappingStrategy.Companion.AUTO_GENERATE
 import com.github.zimolab.jow.core.JsObjectWrapper
-import com.github.zimolab.jow.core.JsObjectWrapperArray
+import com.github.zimolab.jow.core.array.JsObjectWrapperArray
 import netscape.javascript.JSObject
 import java.util.*
 

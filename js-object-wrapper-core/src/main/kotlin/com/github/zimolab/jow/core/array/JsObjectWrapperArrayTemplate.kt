@@ -1,4 +1,4 @@
-package com.github.zimolab.jow.core
+package com.github.zimolab.jow.core.array
 
 import com.github.zimolab.jsarray.*
 import com.github.zimolab.jsarray.base.*

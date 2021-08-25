@@ -1,5 +1,6 @@
-package com.github.zimolab.jow.core
+package com.github.zimolab.jow.core.array
 
+import com.github.zimolab.jow.core.JsObjectWrapper
 import netscape.javascript.JSObject
 
 abstract class JsObjectWrapperArray<T: JsObjectWrapper?>(reference: JSObject, useCache: Boolean = true): JsObjectWrapperArrayTemplate<T>(reference) {
