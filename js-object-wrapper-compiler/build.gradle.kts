@@ -32,7 +32,7 @@ dependencies {
     implementation("com.squareup:kotlinpoet:1.9.0")
     implementation("com.github.zimolab:js-array:$jsArrayVersion")
 
-    implementation(project(":js-object-wrapper-array"))
+    implementation(project(":js-object-wrapper-core"))
     implementation(project(":js-object-wrapper-annotation"))
     implementation(files("libs/formatter.jar"))
 }

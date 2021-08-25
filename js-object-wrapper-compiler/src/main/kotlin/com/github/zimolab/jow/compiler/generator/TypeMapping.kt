@@ -3,7 +3,7 @@ package com.github.zimolab.jow.compiler.generator
 import com.github.zimolab.jow.annotation.obj.JsObjectFunction
 import com.github.zimolab.jow.annotation.obj.JsObjectProperty
 import com.github.zimolab.jow.annotation.obj.typemapping.*
-import com.github.zimolab.jow.array.JsObjectWrapper
+import com.github.zimolab.jow.core.JsObjectWrapper
 import com.github.zimolab.jow.compiler.*
 import com.github.zimolab.jow.compiler.generator.TypeMapper.BuiltinTypeMappingFunctions.getBuiltinTypeMappingFunction
 import com.github.zimolab.jow.compiler.resolve.ResolvedFunction

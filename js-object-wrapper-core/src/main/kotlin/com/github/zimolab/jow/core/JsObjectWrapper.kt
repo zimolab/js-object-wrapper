@@ -1,4 +1,4 @@
-package com.github.zimolab.jow.array
+package com.github.zimolab.jow.core
 
 import netscape.javascript.JSObject
 

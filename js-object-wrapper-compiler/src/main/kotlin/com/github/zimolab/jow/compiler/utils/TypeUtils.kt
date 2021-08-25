@@ -1,7 +1,7 @@
 package com.github.zimolab.jow.compiler.utils
 
 import com.github.zimolab.jsarray.base.JsArrayInterface
-import com.github.zimolab.jow.array.JsObjectWrapper
+import com.github.zimolab.jow.core.JsObjectWrapper
 import com.github.zimolab.jow.compiler.qualifiedName
 import com.github.zimolab.jow.compiler.qualifiedNameStr
 import com.github.zimolab.jow.compiler.subclassOf

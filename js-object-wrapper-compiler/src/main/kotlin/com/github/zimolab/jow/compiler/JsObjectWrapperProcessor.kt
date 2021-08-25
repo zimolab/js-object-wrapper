@@ -3,7 +3,7 @@ package com.github.zimolab.jow.compiler
 import com.github.zimolab.jow.annotation.obj.JsObjectClass
 import com.github.zimolab.jow.annotation.obj.JsObjectFunction
 import com.github.zimolab.jow.annotation.obj.JsObjectProperty
-import com.github.zimolab.jow.array.JsObjectWrapper
+import com.github.zimolab.jow.core.JsObjectWrapper
 import com.github.zimolab.jow.compiler.generator.JsObjectWrapperClassGenerator
 import com.github.zimolab.jow.compiler.resolve.ResolvedClass
 import com.github.zimolab.jow.compiler.resolve.ResolvedFunction

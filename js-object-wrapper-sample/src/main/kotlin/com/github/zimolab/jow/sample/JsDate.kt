@@ -8,8 +8,8 @@ import com.github.zimolab.jow.annotation.obj.JsObjectParameter
 import com.github.zimolab.jow.annotation.obj.JsObjectProperty
 import com.github.zimolab.jow.annotation.obj.typemapping.TypeMappingStrategy.Companion.AUTO_DETERMINE
 import com.github.zimolab.jow.annotation.obj.typemapping.TypeMappingStrategy.Companion.AUTO_GENERATE
-import com.github.zimolab.jow.array.JsObjectWrapper
-import com.github.zimolab.jow.array.JsObjectWrapperArray
+import com.github.zimolab.jow.core.JsObjectWrapper
+import com.github.zimolab.jow.core.JsObjectWrapperArray
 import netscape.javascript.JSObject
 import java.util.*
 

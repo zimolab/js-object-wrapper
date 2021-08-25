@@ -23,7 +23,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.6.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     implementation("com.github.zimolab:js-array:$jsArrayVersion")
-    implementation(project(":js-object-wrapper-array"))
+    implementation(project(":js-object-wrapper-core"))
     implementation(project(":js-object-wrapper-annotation"))
     implementation(project(":js-object-wrapper-compiler"))
     ksp(project(":js-object-wrapper-compiler"))
