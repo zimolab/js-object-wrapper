@@ -1,6 +1,7 @@
 package com.github.zimolab.jow.compiler.resolver
 
 import com.github.zimolab.jow.annotation.obj.JsObjectFunction
+import com.github.zimolab.jow.annotation.obj.JsObjectParameter
 import com.github.zimolab.jow.annotation.obj.typecast.TypeCastCategory
 import com.github.zimolab.jow.compiler.*
 import com.github.zimolab.jow.compiler.generator.TypeCast
@@ -11,6 +12,7 @@ import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import java.util.logging.Logger
 
+@ExperimentalUnsignedTypes
 class FunctionResolver(
     val declaration: KSFunctionDeclaration,
     val annotation: KSAnnotation?
@@ -40,6 +42,17 @@ class FunctionResolver(
                     param.type.resolve(),
                     param.isVararg
                 )
+            )
+        }
+        return parameters
+    }
+
+    fun resolveParameters2(): MutableList<ResolvedFunctionParameter> {
+        val parameters = mutableListOf<ResolvedFunctionParameter>()
+        declaration.parameters.forEach { param->
+            val annotation = param.findAnnotations(JsObjectParameter::class).firstOrNull()
+            parameters.add(
+                ResolvedFunctionParameter(param, annotation)
             )
         }
         return parameters

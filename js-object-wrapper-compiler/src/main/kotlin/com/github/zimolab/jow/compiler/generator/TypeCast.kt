@@ -570,7 +570,7 @@ class TypeCast private constructor(
                 }
                 TypeCastTarget.FUNC_PARAMETER -> {
                     val parameter = targetObj as ResolvedFunctionParameter
-                    val name = parameter.name
+                    val simpleName = parameter.type.simpleName
                     val nullable = TypeUtils.isNullable(parameter.type)
                     val hasTypeArguments = parameter.type.arguments.isNotEmpty()
                     val uid = if (hasTypeArguments) {
@@ -578,7 +578,7 @@ class TypeCast private constructor(
                     } else {
                         ""
                     }
-                    "${prefix}${if (prefix == "") "cast" else "Cast"}${if (nullable) "Nullable" else ""}${name}${if (hasTypeArguments) "_${uid}" else ""}${suffix}"
+                    "${prefix}${if (prefix == "") "cast" else "Cast"}${if (nullable) "Nullable" else ""}${simpleName}${if (hasTypeArguments) "_${uid}" else ""}${suffix}"
                 }
             }
         }

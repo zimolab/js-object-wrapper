@@ -364,6 +364,7 @@ class JsObjectWrapperClassGenerator(
             val functionName = resolvedFunction.simpleName
             val jsMemberName = resolvedFunction.meta.jsMemberName
             val functionParameters = resolvedFunction.parameters
+            val parameters = resolvedFunction.meta.parameters
             val functionReturnType = resolvedFunction.returnType
             val raiseExceptionOnUndefined = resolvedFunction.meta.raiseExceptionOnUndefined
 
@@ -373,18 +374,23 @@ class JsObjectWrapperClassGenerator(
                 .returns(functionReturnType.asTypeName())
 
             // 添加函数参数
-            functionParameters.forEach { param ->
-                val paramSpec = if (param.isVarargs) {
+            parameters.forEach { param ->
+                val paramSpec = if (param.isVararg) {
                     ParameterSpec.builder(param.name, param.type.asTypeName(), KModifier.VARARG).build()
                 } else {
                     ParameterSpec.builder(param.name, param.type.asTypeName()).build()
                 }
                 functionBuilder.addParameter(paramSpec)
             }
+            val argumentList = mutableListOf<String>()
+            parameters.forEach { param->
+                val paramTypeCast = TypeCast.of(TypeCastTarget.FUNC_PARAMETER, param, classBuilder)
+                argumentList.add(param.meta.asArgumentString(paramTypeCast))
+            }
 
             // 添加函数体
-            val argumentsBuffer = StringBuffer()
-            FunctionArgumentsResolver.resolve(functionParameters).joinTo(argumentsBuffer)
+            //val argumentsBuffer = StringBuffer()
+            //FunctionArgumentsResolver.resolve(functionParameters).joinTo(argumentsBuffer)
 
             val nullable = TypeUtils.isNullable(functionReturnType)
             val isNativeType = TypeUtils.isNativeType(functionReturnType)
@@ -432,14 +438,14 @@ class JsObjectWrapperClassGenerator(
                 CodeBlock.of(
                     codeTemplate,
                     jsMemberName,
-                    argumentsBuffer.toString(),
+                    argumentList.joinToString(","),
                     functionReturnType.asTypeName().copy(nullable = false)
                 ).toString()
             } else {
                 CodeBlock.of(
                     codeTemplate,
                     jsMemberName,
-                    argumentsBuffer.toString(),
+                    argumentList.joinToString(","),
                 ).toString()
             }.let {
                 CodeFormatter.format(it)

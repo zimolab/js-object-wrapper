@@ -38,15 +38,11 @@ class ResolvedFunctionParameter(
             resolver.resolveTypeCastCategory()
         }
 
-        val typeCast by lazy {
-            TypeCast.ofFunctionParameter(this@ResolvedFunctionParameter)
-        }
-
-        val asArgumentString by lazy {
-            if (isVararg) {
+        fun asArgumentString(typeCast: TypeCast): String {
+            return if (isVararg) {
                 val args = name
                 val mapped = if (typeCast.typeCastMethod == TypeCastMethod.CAST_FUNCTION) {
-                    "_${typeCast.functionName}(it)"
+                    "${typeCast.functionName}(it)"
                 } else {
                     null
                 }

@@ -4,8 +4,11 @@ import com.github.zimolab.jow.annotation.obj.JsObjectClass
 import com.github.zimolab.jsarray.base.JsArray
 import com.github.zimolab.jsarray.base.JsArrayInterface
 import com.github.zimolab.jow.annotation.obj.JsObjectFunction
+import com.github.zimolab.jow.annotation.obj.JsObjectParameter
 import com.github.zimolab.jow.annotation.obj.JsObjectProperty
 import com.github.zimolab.jow.annotation.obj.typecast.AUTO_DETERMINE
+import com.github.zimolab.jow.annotation.obj.typecast.AUTO_GEN
+import com.github.zimolab.jow.annotation.obj.typecast.NO_CAST
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.array.JsObjectWrapperArray
 import netscape.javascript.JSObject
@@ -42,7 +45,7 @@ interface JsDate: JsObjectWrapper {
     fun test2(a: JsDateTime, b: JsDateTimeImp, c: Any, d: JsDate, vararg dates: JsDate): JsDateTimeImp
     fun test3(a: Int, b: JSObject?, c: Any, d: JsDate?, vararg dates: JsDate?)
     fun test4(a: Int, b: JsArray<Any?>, d: JsObjectWrapperArray<JsDate>?, vararg dates: Int)
-    fun test5(b: JsArray<Any?>?, d: JsObjectWrapperArray<JsDate>?, vararg dates: Date?)
+    fun test5(@JsObjectParameter(AUTO_GEN) b: JsArray<Any?>?, d: JsObjectWrapperArray<JsDate>?, @JsObjectParameter(typeCast = AUTO_DETERMINE) vararg dates: Date?)
     fun test6(b: JsArray<Any?>?, d: JsObjectWrapperArray<JsDate>?, vararg dates: Int?)
     fun test7(vararg dates: JSObject)
     fun test8(vararg dates: JsDate)

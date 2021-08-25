@@ -65,5 +65,9 @@ class ResolvedFunction(
         val returnTypeCastCategory by lazy {
             resolver.resolveReturnTypeCastCategory()
         }
+
+        val parameters by lazy {
+            resolver.resolveParameters2()
+        }
     }
 }
