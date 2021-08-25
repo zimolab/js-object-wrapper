@@ -1,17 +1,17 @@
 package com.github.zimolab.jow.compiler.resolver
 
-import com.github.zimolab.jow.annotation.obj.JsObjectWrapperClass
+import com.github.zimolab.jow.annotation.obj.JsObjectClass
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 
-class ResolvedJsObjectWrapperClass(
+class ResolvedClass(
     val originDeclaration: KSClassDeclaration,
     val originAnnotation: KSAnnotation,
     val options: Map<String, String>
 ) {
 
-    val functions = mutableListOf<ResolvedJsObjectWrapperFunction>()
-    val properties = mutableListOf<ResolvedJsObjectWrapperProperty>()
+    val functions = mutableListOf<ResolvedFunction>()
+    val properties = mutableListOf<ResolvedProperty>()
 
     val resolver: ClassResolver = ClassResolver(originDeclaration, originAnnotation, options)
 
@@ -43,11 +43,11 @@ class ResolvedJsObjectWrapperClass(
         MetaData()
     }
 
-    fun addProperty(resolvedField: ResolvedJsObjectWrapperProperty) {
+    fun addProperty(resolvedField: ResolvedProperty) {
         properties.add(resolvedField)
     }
 
-    fun addFunction(resolvedFunction: ResolvedJsObjectWrapperFunction) {
+    fun addFunction(resolvedFunction: ResolvedFunction) {
         functions.add(resolvedFunction)
     }
 
@@ -69,7 +69,7 @@ class ResolvedJsObjectWrapperClass(
         }
 
         val ignoreUnsupportedTypes by lazy {
-           resolver.resolveAnnotationArgument(JsObjectWrapperClass::ignoreUnsupportedTypes.name, JsObjectWrapperClass.IGNORE_UNSUPPORTED_TYPES)
+           resolver.resolveAnnotationArgument(JsObjectClass::ignoreUnsupportedTypes.name, JsObjectClass.IGNORE_UNSUPPORTED_TYPES)
         }
 
     }

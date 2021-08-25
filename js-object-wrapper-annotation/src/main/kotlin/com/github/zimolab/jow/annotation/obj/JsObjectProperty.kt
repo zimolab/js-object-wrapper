@@ -3,7 +3,7 @@ package com.github.zimolab.jow.annotation.obj
 import com.github.zimolab.jow.annotation.obj.typecast.AUTO_DETERMINE
 
 @Target(AnnotationTarget.PROPERTY)
-annotation class JsObjectWrapperProperty(
+annotation class JsObjectProperty(
     val jsMemberName: String = "",
     val skip: Boolean = SKIP,
     val undefinedAsNull: Boolean = UNDEFINED_AS_NULL,

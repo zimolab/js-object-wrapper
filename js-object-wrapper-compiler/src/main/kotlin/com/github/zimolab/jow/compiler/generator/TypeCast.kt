@@ -1,14 +1,16 @@
 package com.github.zimolab.jow.compiler.generator
 
-import com.github.zimolab.jow.annotation.obj.JsObjectWrapperFunction
-import com.github.zimolab.jow.annotation.obj.JsObjectWrapperProperty
+import com.github.zimolab.jow.annotation.obj.JsObjectFunction
+import com.github.zimolab.jow.annotation.obj.JsObjectProperty
 import com.github.zimolab.jow.annotation.obj.typecast.*
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.compiler.*
 import com.github.zimolab.jow.compiler.generator.TypeCast.BuiltinTypeCastFunctions.JS_ARRAY_INTERFACE_SETTER_CAST_FUNC
 import com.github.zimolab.jow.compiler.generator.TypeCast.BuiltinTypeCastFunctions.JS_OBJECT_WRAPPER_SETTER_CAST_FUNC
-import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperFunction
-import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperProperty
+import com.github.zimolab.jow.compiler.resolver.ResolvedFunction
+import com.github.zimolab.jow.compiler.resolver.ResolvedFunctionParameter
+import com.github.zimolab.jow.compiler.resolver.ResolvedProperty
+import com.github.zimolab.jow.compiler.utils.TypeUtils
 import com.github.zimolab.jsarray.base.JsArrayInterface
 import com.google.devtools.ksp.symbol.KSType
 import com.squareup.kotlinpoet.*
@@ -30,14 +32,20 @@ enum class TypeCastTarget {
 }
 
 class TypeCast private constructor(
-    val category: TypeCastMethod,
+    val typeCastMethod: TypeCastMethod,
     val target: TypeCastTarget,
-    val typeCastFunctionName: String,
-    val builtinCastFunction: FunSpec? = null
+    val functionName: String,
+    functionSpec: FunSpec? = null,
+    val isBuiltinFunction: Boolean = false
 ) {
 
+    var functionSpec: FunSpec? = functionSpec
+        private set
+
+    /**
+     * 内置类型转换函数
+     */
     object BuiltinTypeCastFunctions {
-        // 内置的类型转换函数
         // func __castJsObjectWrapper__(arg: JsObjectWrapper?): JsObject? = arg?.source
         val JS_OBJECT_WRAPPER_SETTER_CAST_FUNC =
             createTypeCastFunction(
@@ -100,7 +108,7 @@ class TypeCast private constructor(
         ): String {
             return when (target) {
                 TypeCastTarget.PROP_SETTER -> {
-                    val prop = targetObj as ResolvedJsObjectWrapperProperty
+                    val prop = targetObj as ResolvedProperty
                     val simpleName = prop.type.simpleName
                     val nullable = TypeUtils.isNullable(prop.type)
                     val hasTypeArguments = prop.type.arguments.isNotEmpty()
@@ -112,7 +120,7 @@ class TypeCast private constructor(
                     "${prefix}${if (prefix == "") "cast" else "Cast"}${if (nullable) "Nullable" else ""}${simpleName}${if (hasTypeArguments) "_${uid}" else ""}${suffix}"
                 }
                 TypeCastTarget.PROP_GETTER -> {
-                    val prop = targetObj as ResolvedJsObjectWrapperProperty
+                    val prop = targetObj as ResolvedProperty
                     val simpleName = prop.type.simpleName
                     val nullable = TypeUtils.isNullable(prop.type)
                     val hasTypeArguments = prop.type.arguments.isNotEmpty()
@@ -124,7 +132,7 @@ class TypeCast private constructor(
                     "${prefix}${if (prefix == "") "as" else "As"}${if (nullable) "Nullable" else ""}${simpleName}${if (hasTypeArguments) "_${uid}" else ""}${suffix}"
                 }
                 TypeCastTarget.FUNC_RETURN -> {
-                    val func = targetObj as ResolvedJsObjectWrapperFunction
+                    val func = targetObj as ResolvedFunction
                     val simpleName = func.returnType.simpleName
                     val nullable = TypeUtils.isNullable(func.returnType)
                     val hasTypeArguments = func.returnType.arguments.isNotEmpty()
@@ -136,7 +144,7 @@ class TypeCast private constructor(
                     "${prefix}${if (prefix == "") "as" else "As"}${if (nullable) "Nullable" else ""}${simpleName}${if (hasTypeArguments) "_${uid}" else ""}${suffix}"
                 }
                 TypeCastTarget.FUNC_ARGUMENT -> {
-                    val func = targetObj as ResolvedJsObjectWrapperFunction
+                    val func = targetObj as ResolvedFunction
                     val simpleName = func.returnType.simpleName
                     val nullable = TypeUtils.isNullable(func.returnType)
                     val hasTypeArguments = func.returnType.arguments.isNotEmpty()
@@ -159,182 +167,289 @@ class TypeCast private constructor(
                 null
         }
 
-        fun ofSetter(property: ResolvedJsObjectWrapperProperty): TypeCast {
-            val category = property.resolver.resolveSetterTypeCastCategory()
-            // 空字符串检查
-            category.ifEmpty {
-                AnnotationProcessingError(
-                    """@${JsObjectWrapperProperty::class.simpleName}注解的${JsObjectWrapperProperty::setterTypeCast.name}参数不可为空，请使用以下值：
-                    |"$AUTO_DETERMINE" - 由系统自动决定（对于原生支持的类型，不使用转换。在setter中，对于特定类型（JsArrayInterface、JsObjectWrapper，及其子类），使用内置转换函数。对于其他类型，自动生成一个抽象转换函数，由用户在子类中实现）
-                    |"$AUTO_GEN"       - 自动生成一个抽象转换函数，由用户在子类中实现
-                    |"$NO_CAST"        - 不进行类型转换处理
-                    |用户定义值          - 生成以该值为名称的抽象转换函数，由用户在子类中实现。
-                """.trimMargin()
-                ).let {
-                    logger.error(it)
+
+        fun of(target: TypeCastTarget, targetObj: Any, classBuilder: TypeSpec.Builder): TypeCast {
+            when (target) {
+                TypeCastTarget.PROP_SETTER,
+                TypeCastTarget.PROP_GETTER -> {
+                    val prop = targetObj as ResolvedProperty
+
+                    val typeCast = if (target == TypeCastTarget.PROP_SETTER) {
+                        ofSetter(prop)
+                    } else {
+                        ofGetter(prop)
+                    }
+
+                    if (typeCast.typeCastMethod == TypeCastMethod.NO_CAST)
+                        return typeCast
+
+                    if (typeCast.isBuiltinFunction) {
+                        if (classBuilder.funSpecs.firstOrNull { it.name == typeCast.functionName && it.parameters.size == 1 } == null)
+                            classBuilder.addFunction(typeCast.functionSpec!!)
+                        return typeCast
+                    }
+
+                    var castFunc =
+                        classBuilder.funSpecs.firstOrNull { it.name == typeCast.functionName && it.parameters.size == 1 }
+
+                    if (castFunc == null) {
+                        castFunc = if (target == TypeCastTarget.PROP_SETTER) {
+                            createSetterCastFunction(typeCast.functionName, "src", prop)
+                        } else {
+                            createGetterCastFunction(typeCast.functionName, "src", prop)
+                        }
+                        classBuilder.addFunction(castFunc)
+                    }
+
+                    typeCast.functionSpec = castFunc
+                    return typeCast
+                }
+                TypeCastTarget.FUNC_RETURN -> {
+                    val func = targetObj as ResolvedFunction
+                    val typeCast = ofFunctionReturn(func)
+                    if (typeCast.typeCastMethod == TypeCastMethod.NO_CAST || typeCast.functionSpec != null)
+                        return typeCast
+                    var castFunc =
+                        classBuilder.funSpecs.firstOrNull { it.name == typeCast.functionName && it.parameters.size == 1 }
+                    if (castFunc == null) {
+                        castFunc = createReturnTypeCastFunction(typeCast.functionName, "arg", func)
+                        classBuilder.addFunction(castFunc)
+                    }
+                    typeCast.functionSpec = castFunc
+                    return typeCast
+                }
+                TypeCastTarget.FUNC_ARGUMENT -> {
+                    TODO("")
                 }
             }
+        }
 
-            val nativeType =
-                TypeUtils.isNativeType(property.type) || TypeUtils.isVoidType(property.type) || TypeUtils.isAnyType(
-                    property.type
-                )
+        fun ofSetter(property: ResolvedProperty): TypeCast {
+            val category = property.meta.setterTypeCastCategory
+            val nativeType = property.meta.isNativeType
 
-            when (category) {
-                // 自动决定如何使用类型转换函数
-                AUTO_DETERMINE -> {
-                    // 1、如果为原生类型则无需应用类型转换处理
-                    if (nativeType)
-                        return TypeCast(TypeCastMethod.NO_CAST, TypeCastTarget.PROP_SETTER, "")
-                    // 2、如果有内置的类型转换函数，则使用内置的
-                    val builtinCastFunction = getBuiltinTypeCastFunction(property.type)
-                    return if (builtinCastFunction != null) {
+            return when (category) {
+                is TypeCastCategory.AutoDetermine -> {
+                    if (nativeType) {
                         TypeCast(
-                            TypeCastMethod.CAST_FUNCTION,
-                            TypeCastTarget.PROP_SETTER,
-                            builtinCastFunction.name,
-                            builtinCastFunction
+                            typeCastMethod = TypeCastMethod.NO_CAST,
+                            target = TypeCastTarget.PROP_SETTER,
+                            functionName = "",
+                            functionSpec = null,
+                            isBuiltinFunction = false
                         )
                     } else {
-                        //3、如果无内置的类型转换函数，则自动生成一个
+                        val builtinCastFunc = getBuiltinTypeCastFunction(property.type)
+                        if (builtinCastFunc != null) {
+                            TypeCast(
+                                typeCastMethod = TypeCastMethod.CAST_FUNCTION,
+                                target = TypeCastTarget.PROP_SETTER,
+                                functionName = builtinCastFunc.name,
+                                functionSpec = builtinCastFunc,
+                                isBuiltinFunction = true
+                            )
+                        } else {
+                            TypeCast(
+                                typeCastMethod = TypeCastMethod.CAST_FUNCTION,
+                                target = TypeCastTarget.PROP_SETTER,
+                                functionName = generateTypeCastFunctionName(TypeCastTarget.PROP_SETTER, property),
+                                functionSpec = null,
+                                isBuiltinFunction = false
+                            )
+                        }
+                    }
+                }
+
+                is TypeCastCategory.NoCast -> {
+                    TypeCast(
+                        typeCastMethod = TypeCastMethod.NO_CAST,
+                        target = TypeCastTarget.PROP_SETTER,
+                        functionName = "",
+                        functionSpec = null,
+                        isBuiltinFunction = false
+                    )
+                }
+
+                is TypeCastCategory.AutoGenerate -> {
+                    TypeCast(
+                        typeCastMethod = TypeCastMethod.CAST_FUNCTION,
+                        target = TypeCastTarget.PROP_SETTER,
+                        functionName = generateTypeCastFunctionName(TypeCastTarget.PROP_SETTER, property),
+                        functionSpec = null,
+                        isBuiltinFunction = false
+                    )
+                }
+
+                is TypeCastCategory.NoCastExceptBuiltin -> {
+                    val builtinFunc = getBuiltinTypeCastFunction(property.type)
+                    if (builtinFunc == null) {
                         TypeCast(
-                            TypeCastMethod.CAST_FUNCTION,
-                            TypeCastTarget.PROP_SETTER,
-                            generateTypeCastFunctionName(TypeCastTarget.PROP_SETTER, property)
+                            typeCastMethod = TypeCastMethod.NO_CAST,
+                            target = TypeCastTarget.PROP_SETTER,
+                            functionName = "",
+                            functionSpec = null,
+                            isBuiltinFunction = false
+                        )
+                    } else {
+                        TypeCast(
+                            typeCastMethod = TypeCastMethod.CAST_FUNCTION,
+                            target = TypeCastTarget.PROP_SETTER,
+                            functionName = builtinFunc.name,
+                            functionSpec = builtinFunc,
+                            isBuiltinFunction = true
                         )
                     }
                 }
-                // 对于setter而言，允许不使用类型转换
-                NO_CAST -> {
-                    return TypeCast(TypeCastMethod.NO_CAST, TypeCastTarget.PROP_SETTER, "")
-                }
-                // 自动生成类型转换函数名
-                AUTO_GEN -> {
-                    return TypeCast(
-                        TypeCastMethod.CAST_FUNCTION, TypeCastTarget.PROP_SETTER,
-                        generateTypeCastFunctionName(TypeCastTarget.PROP_SETTER, targetObj = property)
+
+                is TypeCastCategory.UserSpecify -> {
+                    TypeCast(
+                        typeCastMethod = TypeCastMethod.CAST_FUNCTION,
+                        target = TypeCastTarget.PROP_SETTER,
+                        functionName = category.name,
+                        functionSpec = null,
+                        isBuiltinFunction = false
                     )
                 }
-                // 采用用户指定的名称作为类型转换函数名称
-                else -> {
-                    return TypeCast(TypeCastMethod.CAST_FUNCTION, TypeCastTarget.PROP_SETTER, category)
-                }
             }
-
         }
 
-        fun ofGetter(property: ResolvedJsObjectWrapperProperty): TypeCast {
-            val category = property.resolver.resolveGetterTypeCastCategory()
-            // 空字符串检查
-            category.ifEmpty {
-                AnnotationProcessingError(
-                    """@${JsObjectWrapperProperty::class.simpleName}注解的${JsObjectWrapperProperty::setterTypeCast.name}参数不可为空，请使用以下值：
-                    |"$AUTO_DETERMINE" - 由系统自动决定（对于原生支持的类型，不使用转换。在setter中，对于特定类型（JsArrayInterface、JsObjectWrapper，及其子类），使用内置转换函数。对于其他类型，自动生成一个抽象转换函数，由用户在子类中实现）
-                    |"$AUTO_GEN"       - 自动生成一个抽象转换函数，由用户在子类中实现
-                    |"$NO_CAST"        - 不进行类型转换处理
-                    |用户定义值          - 生成以该值为名称的抽象转换函数，由用户在子类中实现。
-                """.trimMargin()
-                ).let {
-                    logger.error(it)
-                }
-            }
-            val nativeType =
-                TypeUtils.isNativeType(property.type) || TypeUtils.isVoidType(property.type) || TypeUtils.isAnyType(
-                    property.type
-                )
-            when (category) {
-                AUTO_DETERMINE -> {
+        fun ofGetter(property: ResolvedProperty): TypeCast {
+            val category = property.meta.getterTypeCastCategory
+            val nativeType = property.meta.isNativeType
+            return when (category) {
+                is TypeCastCategory.AutoDetermine -> {
                     // getter无内置的类型转换函数
-                    return if (nativeType) {
-                        TypeCast(TypeCastMethod.NO_CAST, TypeCastTarget.PROP_GETTER, "")
+                    if (nativeType) {
+                         TypeCast(
+                            typeCastMethod = TypeCastMethod.NO_CAST,
+                            target = TypeCastTarget.PROP_GETTER,
+                            functionName = "",
+                            functionSpec = null,
+                            isBuiltinFunction = false
+                        )
                     } else
                         TypeCast(
-                            TypeCastMethod.CAST_FUNCTION, TypeCastTarget.PROP_GETTER,
-                            generateTypeCastFunctionName(TypeCastTarget.PROP_GETTER, property)
+                            typeCastMethod = TypeCastMethod.CAST_FUNCTION,
+                            target = TypeCastTarget.PROP_GETTER,
+                            functionName = generateTypeCastFunctionName(TypeCastTarget.PROP_GETTER, property),
+                            functionSpec = null,
+                            isBuiltinFunction = false
                         )
                 }
-                // 对于getter而言，除原生类型之外的其他类型都必须提供一个类型转换函数，以避免类型转换错误
-                // 换言之，getterTypeCast=NO_CAST仅适用于被注解属性为原生类型的情形
-                NO_CAST -> {
+
+                is TypeCastCategory.NoCast -> {
                     if (nativeType) {
-                        return TypeCast(TypeCastMethod.NO_CAST, TypeCastTarget.PROP_GETTER, "")
+                        TypeCast(
+                            typeCastMethod = TypeCastMethod.NO_CAST,
+                            target = TypeCastTarget.PROP_GETTER,
+                            functionName = "",
+                            functionSpec = null,
+                            isBuiltinFunction = false
+                        )
                     } else {
                         AnnotationProcessingError(
-                            """NO_CAST(${NO_CAST})不适用于非原生类型属性，请将${JsObjectWrapperProperty::getterTypeCast.name}参数指定为以下值之一:
-                                    |"$AUTO_DETERMINE" - 由系统自动决定（对于原生支持的类型，不使用转换；对于其他类型，自动生成一个抽象转换函数，由用户在子类中实现）
-                                    |"$AUTO_GEN"       - 自动生成一个抽象转换函数，由用户在子类中实现
-                                    |用户定义值          - 生成以该值为名称的抽象转换函数，由用户在子类中实现。指定的值必须符合函数标识符命名规则
-                                    |""".trimMargin()
+                            "NO_CAST(${NO_CAST})不适用于非原生类型属性"
                         ).let {
                             logger.error(it, throws = false)
                             throw it
                         }
                     }
                 }
-                // 自动生成转换函数名称
-                AUTO_GEN -> {
-                    return TypeCast(
-                        TypeCastMethod.CAST_FUNCTION, TypeCastTarget.PROP_GETTER,
-                        generateTypeCastFunctionName(TypeCastTarget.PROP_GETTER, property)
+
+                is TypeCastCategory.AutoGenerate -> {
+                    TypeCast(
+                        typeCastMethod = TypeCastMethod.CAST_FUNCTION,
+                        target = TypeCastTarget.PROP_GETTER,
+                        functionName = generateTypeCastFunctionName(TypeCastTarget.PROP_GETTER, property),
+                        functionSpec = null,
+                        isBuiltinFunction = false
                     )
                 }
-                // 使用用户指定的名称
-                else -> {
-                    return TypeCast(TypeCastMethod.CAST_FUNCTION, TypeCastTarget.PROP_SETTER, category)
+                is TypeCastCategory.NoCastExceptBuiltin -> {
+                    AnnotationProcessingError("${category.name}不适用于${JsObjectProperty::getterTypeCast.name}参数").let {
+                        logger.error(it, throws = false)
+                        throw it
+                    }
+                }
+
+                is TypeCastCategory.UserSpecify -> {
+                    TypeCast(
+                        typeCastMethod = TypeCastMethod.CAST_FUNCTION,
+                        target = TypeCastTarget.PROP_GETTER,
+                        functionName = category.name,
+                        functionSpec = null,
+                        isBuiltinFunction = false
+                    )
                 }
             }
-
         }
 
-        fun ofFunctionReturn(func: ResolvedJsObjectWrapperFunction): TypeCast {
-            val category = func.resolver.resolveReturnTypeCastCategory()
-            category.ifEmpty {
-                AnnotationProcessingError("@${JsObjectWrapperFunction::class.simpleName}注解的${JsObjectWrapperFunction::returnTypeCast.name}参数不能为空").let {
-                    logger.error(it)
-                }
-            }
+        fun ofFunctionArgument(argument: ResolvedFunctionParameter): TypeCast {
+            TODO()
+        }
+
+        fun ofFunctionReturn(func: ResolvedFunction): TypeCast {
+            val category = func.meta.returnTypeCastCategory
             val nativeType =
                 TypeUtils.isNativeType(func.returnType) || TypeUtils.isVoidType(func.returnType) || TypeUtils.isAnyType(
                     func.returnType
                 )
-            when (category) {
-                AUTO_DETERMINE -> {
-                    return if (nativeType) {
-                        TypeCast(TypeCastMethod.NO_CAST, TypeCastTarget.FUNC_RETURN, "")
-                    } else
+            return when (category) {
+                is TypeCastCategory.AutoDetermine -> {
+                    if (nativeType) {
                         TypeCast(
-                            TypeCastMethod.CAST_FUNCTION, TypeCastTarget.FUNC_RETURN,
-                            generateTypeCastFunctionName(TypeCastTarget.FUNC_RETURN, targetObj = func)
+                            typeCastMethod = TypeCastMethod.NO_CAST,
+                            target = TypeCastTarget.FUNC_RETURN,
+                            functionName = "",
+                            functionSpec = null,
+                            isBuiltinFunction = false
                         )
-                }
-                NO_CAST -> {
-                    return if (nativeType) {
-                        TypeCast(TypeCastMethod.NO_CAST, TypeCastTarget.FUNC_RETURN, "")
                     } else {
-                        AnnotationProcessingError(
-                            """NO_CAST(${NO_CAST})不适用于非原生类型属性，请将${JsObjectWrapperFunction::returnTypeCast.name}参数指定为以下值之一:
-                                    |"$AUTO_DETERMINE" - 由系统自动决定（对于原生支持的类型，不使用转换；对于其他类型，自动生成一个抽象转换函数，由用户在子类中实现）
-                                    |"$AUTO_GEN"       - 自动生成一个抽象转换函数，由用户在子类中实现
-                                    |用户定义值          - 生成以该值为名称的抽象转换函数，由用户在子类中实现。
-                                    |""".trimMargin()
-                        ).let {
-                            logger.error(it, throws = false)
-                            throw it
-                        }
+                        TypeCast(
+                            typeCastMethod = TypeCastMethod.CAST_FUNCTION,
+                            target = TypeCastTarget.FUNC_RETURN,
+                            functionName = generateTypeCastFunctionName(TypeCastTarget.FUNC_RETURN, func),
+                            functionSpec = null,
+                            isBuiltinFunction = false
+                        )
                     }
                 }
-                AUTO_GEN -> {
-                    return TypeCast(
-                        TypeCastMethod.CAST_FUNCTION, TypeCastTarget.FUNC_RETURN,
-                        generateTypeCastFunctionName(TypeCastTarget.FUNC_RETURN, targetObj = func)
-
-                        //generateTypeCastFunctionName(TypeCastTarget.FUNC_RETURN, func)
+                is TypeCastCategory.AutoGenerate -> {
+                    TypeCast(
+                        typeCastMethod = TypeCastMethod.CAST_FUNCTION,
+                        target = TypeCastTarget.FUNC_RETURN,
+                        functionName = generateTypeCastFunctionName(TypeCastTarget.FUNC_RETURN, func),
+                        functionSpec = null,
+                        isBuiltinFunction = false
                     )
                 }
-                else -> {
-                    return TypeCast(
-                        TypeCastMethod.CAST_FUNCTION, TypeCastTarget.FUNC_RETURN,
-                        category
+                is TypeCastCategory.NoCast -> {
+                    if (!nativeType) {
+                        AnnotationProcessingError("${category.name}不适用于${func.returnType.simpleName}类型的返回值").let {
+                            logger.error(it)
+                        }
+                    }
+                    TypeCast(
+                        typeCastMethod = TypeCastMethod.NO_CAST,
+                        target = TypeCastTarget.FUNC_RETURN,
+                        functionName = "",
+                        functionSpec = null,
+                        isBuiltinFunction = false
+                    )
+                }
+                is TypeCastCategory.NoCastExceptBuiltin -> {
+                    AnnotationProcessingError("${category.name}不适用于${JsObjectFunction::returnTypeCast.name}参数").let {
+                        logger.error(it, throws = false)
+                        throw it
+                    }
+                }
+                is TypeCastCategory.UserSpecify -> {
+                    TypeCast(
+                        typeCastMethod = TypeCastMethod.CAST_FUNCTION,
+                        target = TypeCastTarget.FUNC_RETURN,
+                        functionName = category.name,
+                        functionSpec = null,
+                        isBuiltinFunction = false
                     )
                 }
             }
@@ -365,7 +480,7 @@ class TypeCast private constructor(
         fun createSetterCastFunction(
             funcName: String,
             parameterName: String,
-            property: ResolvedJsObjectWrapperProperty,
+            property: ResolvedProperty,
             codeBlock: String? = null,
             vararg args: Any?
         ): FunSpec {
@@ -384,7 +499,7 @@ class TypeCast private constructor(
         fun createGetterCastFunction(
             funcName: String,
             parameterName: String,
-            property: ResolvedJsObjectWrapperProperty,
+            property: ResolvedProperty,
             codeBlock: String? = null,
             vararg args: Any?
         ): FunSpec {
@@ -401,7 +516,7 @@ class TypeCast private constructor(
         fun createReturnTypeCastFunction(
             funcName: String,
             parameterName: String,
-            func: ResolvedJsObjectWrapperFunction,
+            func: ResolvedFunction,
             codeBlock: String? = null,
             vararg args: Any?
         ): FunSpec {
@@ -410,6 +525,23 @@ class TypeCast private constructor(
                 parameterName,
                 Any::class.asTypeName().copy(nullable = true),
                 func.returnType.asTypeName(),
+                codeBlock,
+                *args
+            )
+        }
+
+        fun createArgumentTypeCastFunction(
+            funcName: String,
+            parameterName: String,
+            argumentType: TypeName,
+            codeBlock: String? = null,
+            vararg args: Any?
+        ): FunSpec {
+            return createTypeCastFunction(
+                funcName,
+                parameterName,
+                argumentType,
+                Any::class.asTypeName().copy(nullable = true),
                 codeBlock,
                 *args
             )

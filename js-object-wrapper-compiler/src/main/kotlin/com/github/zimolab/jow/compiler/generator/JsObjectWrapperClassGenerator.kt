@@ -1,13 +1,12 @@
 package com.github.zimolab.jow.compiler.generator
 
-import com.github.zimolab.jow.annotation.obj.JsObjectWrapperClass
-import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperClass
-import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperFunction
+import com.github.zimolab.jow.annotation.obj.JsObjectClass
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.compiler.*
-import com.github.zimolab.jow.compiler.asTypeName
-import com.github.zimolab.jow.compiler.TypeUtils
-import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperProperty
+import com.github.zimolab.jow.compiler.resolver.ResolvedClass
+import com.github.zimolab.jow.compiler.resolver.ResolvedFunction
+import com.github.zimolab.jow.compiler.resolver.ResolvedProperty
+import com.github.zimolab.jow.compiler.utils.TypeUtils
 import com.github.zimolab.jsarray.base.JsArrayInterface
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
@@ -36,15 +35,20 @@ class JsObjectWrapperClassGenerator(
                 "Generate at ${LocalDateTime.now()}"
         val CodeFormatter = KotlinFormatter()
 
+        val warningSuppressForClass = listOf(
+            "FunctionName", "RedundantVisibilityModifier", "RemoveRedundantQualifierName", "RedundantUnitReturnType",
+            "UNUSED_VARIABLE", "RedundantUnitExpression"
+        )
+
     }
 
-    fun submit(resolvedClass: ResolvedJsObjectWrapperClass) {
+    fun submit(resolvedClass: ResolvedClass) {
         FileGenerateTask(resolvedClass).execute()
     }
 
     @ExperimentalUnsignedTypes
     private object FunctionArgumentsResolver {
-        fun resolve(arguments: List<ResolvedJsObjectWrapperFunction.FunctionParameter>): MutableList<String> {
+        fun resolve(arguments: List<ResolvedFunction.FunctionParameter>): MutableList<String> {
             val argumentList = mutableListOf<String>()
             arguments.forEach { arg ->
                 argumentList.add(resolveArgument(arg))
@@ -52,14 +56,14 @@ class JsObjectWrapperClassGenerator(
             return argumentList
         }
 
-        private fun resolveArgument(argument: ResolvedJsObjectWrapperFunction.FunctionParameter): String {
+        private fun resolveArgument(argument: ResolvedFunction.FunctionParameter): String {
             return if (argument.isVarargs)
                 resolveVarargs(argument)
             else
                 resolveNormalArg(argument)
         }
 
-        private fun resolveVarargs(argument: ResolvedJsObjectWrapperFunction.FunctionParameter): String {
+        private fun resolveVarargs(argument: ResolvedFunction.FunctionParameter): String {
             val mapPart = if (TypeUtils.isJsObjectWrapperType(argument.type)) {
                 "_${resolveJsObjectWrapperArg(argument)}"
 
@@ -71,7 +75,6 @@ class JsObjectWrapperClassGenerator(
             val arg = argument.name
             return when (mapPart) {
                 null -> {
-                    val logger = Logger.getLogger(JsObjectWrapperProcessor::class.java.canonicalName)
                     if (TypeUtils.hasToTypedArrayFunction(argument.type)) {
                         "*(${arg}.toTypedArray())"
                     } else {
@@ -84,7 +87,7 @@ class JsObjectWrapperClassGenerator(
             }
         }
 
-        private fun resolveNormalArg(argument: ResolvedJsObjectWrapperFunction.FunctionParameter): String {
+        private fun resolveNormalArg(argument: ResolvedFunction.FunctionParameter): String {
             return if (TypeUtils.isJsObjectWrapperType(argument.type)) {
                 resolveJsObjectWrapperArg(argument)
             } else if (TypeUtils.isJsArrayInterfaceType(argument.type)) {
@@ -95,14 +98,14 @@ class JsObjectWrapperClassGenerator(
 
         }
 
-        private fun resolveJsObjectWrapperArg(argument: ResolvedJsObjectWrapperFunction.FunctionParameter): String {
+        private fun resolveJsObjectWrapperArg(argument: ResolvedFunction.FunctionParameter): String {
             return if (TypeUtils.isNullable(argument.type))
                 "${argument.name}?.${JsObjectWrapper::source.name}"
             else
                 "${argument.name}.${JsObjectWrapper::source.name}"
         }
 
-        private fun resolveJsArrayArg(argument: ResolvedJsObjectWrapperFunction.FunctionParameter): String {
+        private fun resolveJsArrayArg(argument: ResolvedFunction.FunctionParameter): String {
             return if (TypeUtils.isNullable(argument.type))
                 "${argument.name}?.${JsArrayInterface<*>::reference.name}"
             else
@@ -111,8 +114,7 @@ class JsObjectWrapperClassGenerator(
 
     }
 
-    inner class FileGenerateTask(private val resolvedClass: ResolvedJsObjectWrapperClass) {
-
+    inner class FileGenerateTask(private val resolvedClass: ResolvedClass) {
 
         fun execute() {
             logger.debug("开始生成文件(class ${resolvedClass.meta.outputClassName}@${resolvedClass.meta.outputFilename}.kt)")
@@ -190,13 +192,12 @@ class JsObjectWrapperClassGenerator(
         }
 
         private fun createClassAnnotations(classBuilder: TypeSpec.Builder) {
-            // 添加@Suppress("FunctionName")注解，抑制函数名称
-            classBuilder.addAnnotation(
-                AnnotationSpec
-                    .builder(Suppress::class)
-                    .addMember("%S", "FunctionName")
-                    .build()
-            )
+            // 添加@Suppress，抑制一些警告信息
+            val warnSuppressAnnotation =
+                AnnotationSpec.builder(Suppress::class).apply {
+                    warningSuppressForClass.forEach {suppress-> addMember("%S", suppress) }
+                }.build()
+            classBuilder.addAnnotation(warnSuppressAnnotation)
         }
 
         private fun createCompanionMembers(classBuilder: TypeSpec.Builder, companionObjectBuilder: TypeSpec.Builder) {
@@ -210,7 +211,7 @@ class JsObjectWrapperClassGenerator(
         }
 
         private fun createProperty(
-            resolvedProperty: ResolvedJsObjectWrapperProperty,
+            resolvedProperty: ResolvedProperty,
             classBuilder: TypeSpec.Builder
         ): PropertySpec {
 
@@ -227,10 +228,10 @@ class JsObjectWrapperClassGenerator(
             val isAnyType = TypeUtils.isAnyType(resolvedProperty.type)
 
             // getter
-            val getterTypeCast = resolvedProperty.meta.getterTypeCast
-            if (getterTypeCast.category == TypeCastMethod.CAST_FUNCTION) {
-                val funcName = getterTypeCast.typeCastFunctionName
-                if (classBuilder.funSpecs.firstOrNull{it.name == funcName && it.parameters.count() == 1} == null) {
+            val getterTypeCast = TypeCast.ofGetter(resolvedProperty)
+            if (getterTypeCast.typeCastMethod == TypeCastMethod.CAST_FUNCTION) {
+                val funcName = getterTypeCast.functionName
+                if (classBuilder.funSpecs.firstOrNull { it.name == funcName && it.parameters.count() == 1 } == null) {
                     classBuilder.addFunction(
                         TypeCast.createGetterCastFunction(funcName, "arg", resolvedProperty)
                     )
@@ -275,8 +276,8 @@ class JsObjectWrapperClassGenerator(
                     return  ret
                     """
                 } else {
-                    if (getterTypeCast.category == TypeCastMethod.CAST_FUNCTION)
-                        "return ${getterTypeCast.typeCastFunctionName}(ret)"
+                    if (getterTypeCast.typeCastMethod == TypeCastMethod.CAST_FUNCTION)
+                        "return ${getterTypeCast.functionName}(ret)"
                     else
                         "return ret as ${resolvedProperty.type.asTypeName().copy(nullable = false)}"
                 }
@@ -299,16 +300,16 @@ class JsObjectWrapperClassGenerator(
             //~getter
 
             //setter
-            val setterTypeCast = resolvedProperty.meta.setterTypeCast
-            if (setterTypeCast.category == TypeCastMethod.CAST_FUNCTION) {
-                val funcName = setterTypeCast.typeCastFunctionName
-                val builtinFunction = setterTypeCast.builtinCastFunction
+            val setterTypeCast = TypeCast.ofSetter(resolvedProperty)
+            if (setterTypeCast.typeCastMethod == TypeCastMethod.CAST_FUNCTION) {
+                val funcName = setterTypeCast.functionName
+                val builtinFunction = setterTypeCast.functionSpec
                 if (builtinFunction != null) {
-                    if (classBuilder.funSpecs.firstOrNull { it.name==funcName && it.parameters.count()==1 } == null) {
+                    if (classBuilder.funSpecs.firstOrNull { it.name == funcName && it.parameters.count() == 1 } == null) {
                         classBuilder.addFunction(builtinFunction)
                     }
                 } else {
-                    if (classBuilder.funSpecs.firstOrNull { it.name==funcName && it.parameters.count()==1 } == null) {
+                    if (classBuilder.funSpecs.firstOrNull { it.name == funcName && it.parameters.count() == 1 } == null) {
                         classBuilder.addFunction(TypeCast.createSetterCastFunction(funcName, "arg", resolvedProperty))
                     }
                 }
@@ -316,9 +317,9 @@ class JsObjectWrapperClassGenerator(
             val setterParamName = "v"
             if (resolvedProperty.mutable) {
                 val setterBuilder = FunSpec.setterBuilder()
-                val setterCodeTemplate = if (setterTypeCast.category == TypeCastMethod.CAST_FUNCTION) {
+                val setterCodeTemplate = if (setterTypeCast.typeCastMethod == TypeCastMethod.CAST_FUNCTION) {
                     """
-                    ${JsObjectWrapper::source.name}.setMember(%S, ${setterTypeCast.typeCastFunctionName}($setterParamName))
+                    ${JsObjectWrapper::source.name}.setMember(%S, ${setterTypeCast.functionName}($setterParamName))
                     """
                 } else {
                     """${JsObjectWrapper::source.name}.setMember(%S, $setterParamName)"""
@@ -345,9 +346,9 @@ class JsObjectWrapperClassGenerator(
         private fun createConstructor(classBuilder: TypeSpec.Builder) {
             when (resolvedClass.meta.primaryConstructor) {
                 // 不生成主构造函数
-                JsObjectWrapperClass.PrimaryConstructor.None -> return
+                JsObjectClass.PrimaryConstructor.None -> return
                 // 生成空的主构造函数
-                JsObjectWrapperClass.PrimaryConstructor.Blank -> {
+                JsObjectClass.PrimaryConstructor.Blank -> {
                     val primaryConstructor = FunSpec.constructorBuilder()
                         .build()
                     classBuilder
@@ -355,7 +356,7 @@ class JsObjectWrapperClassGenerator(
                 }
                 // 生成带属性和参数的主构造函数
                 // 目前可以带的参数只有一个，即来自JsObjectWrapper的source属性
-                JsObjectWrapperClass.PrimaryConstructor.WithParameter -> {
+                JsObjectClass.PrimaryConstructor.WithParameter -> {
                     val primaryConstructor = FunSpec.constructorBuilder()
                         .addParameter(JsObjectWrapper::source.name, JSObject::class)
                         .build()
@@ -378,7 +379,7 @@ class JsObjectWrapperClassGenerator(
         }
 
         private fun createFunction(
-            resolvedFunction: ResolvedJsObjectWrapperFunction,
+            resolvedFunction: ResolvedFunction,
             classBuilder: TypeSpec.Builder
         ): FunSpec {
             val functionName = resolvedFunction.simpleName
@@ -413,16 +414,17 @@ class JsObjectWrapperClassGenerator(
             val undefinedAsNull = resolvedFunction.meta.undefinedAsNull
 
             // 如果返回值不是支持直接转换的原生类型，则需要添加一个额外的类型转换函数（模板方法），用来对返回值进行转换
-//            if (!isNativeType && !isVoidType && !isAnyType) {
-//                if (resolvedFunction.meta.returnTypeCastor == null)
-//                    resolvedFunction.meta.returnTypeCastor = "__as${functionReturnType.simpleName}__"
-//                createReturnTypeCastor(resolvedFunction.meta.returnTypeCastor, functionReturnType, classBuilder)
-//            }
-//            val returnTypeCastor = resolvedFunction.meta.returnTypeCastor
-            val returnTypeCastFunc = resolvedFunction.meta.returnTypeCast.typeCastFunctionName
-            if (resolvedFunction.meta.returnTypeCast.category == TypeCastMethod.CAST_FUNCTION) {
-                if (classBuilder.funSpecs.firstOrNull{ it.name==returnTypeCastFunc && it.parameters.size == 1 } == null) {
-                    classBuilder.addFunction(TypeCast.createReturnTypeCastFunction(returnTypeCastFunc, "arg", resolvedFunction))
+            val returnTypeCast = TypeCast.ofFunctionReturn(resolvedFunction)
+            val returnTypeCastFunc = returnTypeCast.functionName
+            if (returnTypeCast.typeCastMethod == TypeCastMethod.CAST_FUNCTION) {
+                if (classBuilder.funSpecs.firstOrNull { it.name == returnTypeCastFunc && it.parameters.size == 1 } == null) {
+                    classBuilder.addFunction(
+                        TypeCast.createReturnTypeCastFunction(
+                            returnTypeCastFunc,
+                            "arg",
+                            resolvedFunction
+                        )
+                    )
                 }
             }
 

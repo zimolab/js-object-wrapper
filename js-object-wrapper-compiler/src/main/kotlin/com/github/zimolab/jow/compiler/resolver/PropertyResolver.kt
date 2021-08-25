@@ -1,18 +1,21 @@
 package com.github.zimolab.jow.compiler.resolver
 
-import com.github.zimolab.jow.annotation.obj.JsObjectWrapperProperty
-import com.github.zimolab.jow.compiler.findArgument
-import com.github.zimolab.jow.compiler.qualifiedNameStr
-import com.github.zimolab.jow.compiler.simpleNameStr
+import com.github.zimolab.jow.annotation.obj.JsObjectProperty
+import com.github.zimolab.jow.annotation.obj.typecast.TypeCastCategory
+import com.github.zimolab.jow.compiler.*
 import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSType
+import java.util.logging.Logger
 
 class PropertyResolver(
     val declaration: KSPropertyDeclaration,
     val annotation: KSAnnotation?
 ) {
+
+    private val logger = Logger.getLogger(JsObjectWrapperProcessor::class.java.canonicalName)
+
     private val type by lazy {
         declaration.type.resolve()
     }
@@ -33,7 +36,7 @@ class PropertyResolver(
         return type.isMarkedNullable
     }
 
-    fun  resolveMutable(): Boolean {
+    fun resolveMutable(): Boolean {
         return declaration.isMutable
     }
 
@@ -49,17 +52,35 @@ class PropertyResolver(
     }
 
     fun resolveJsMemberName(): String? {
-        return resolveAnnotationArgument(JsObjectWrapperProperty::jsMemberName.name, "").ifEmpty {
+        return resolveAnnotationArgument(JsObjectProperty::jsMemberName.name, "").ifEmpty {
             null
         }
     }
 
-    fun resolveGetterTypeCastCategory(): String {
-        return resolveAnnotationArgument(JsObjectWrapperProperty::getterTypeCast.name, JsObjectWrapperProperty.DEFAULT_TYPE_CAST)
+    fun resolveGetterTypeCastCategory(): TypeCastCategory {
+        val category =
+            resolveAnnotationArgument(JsObjectProperty::getterTypeCast.name, JsObjectProperty.DEFAULT_TYPE_CAST)
+        category.ifEmpty {
+            AnnotationProcessingError(
+                "@${JsObjectProperty::class.simpleName}注解的${JsObjectProperty::getterTypeCast.name}参数不可为空"
+            ).let {
+                logger.error(it)
+            }
+        }
+        return TypeCastCategory.of(category)
     }
 
-    fun resolveSetterTypeCastCategory(): String {
-        return resolveAnnotationArgument(JsObjectWrapperProperty::setterTypeCast.name, JsObjectWrapperProperty.DEFAULT_TYPE_CAST)
+    fun resolveSetterTypeCastCategory(): TypeCastCategory {
+        val category =
+            resolveAnnotationArgument(JsObjectProperty::setterTypeCast.name, JsObjectProperty.DEFAULT_TYPE_CAST)
+        category.ifEmpty {
+            AnnotationProcessingError(
+                "@${JsObjectProperty::class.simpleName}注解的${JsObjectProperty::setterTypeCast.name}参数不可为空"
+            ).let {
+                logger.error(it)
+            }
+        }
+        return TypeCastCategory.of(category)
     }
 
 }

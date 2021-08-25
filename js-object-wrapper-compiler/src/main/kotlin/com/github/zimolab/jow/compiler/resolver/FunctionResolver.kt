@@ -1,7 +1,9 @@
 package com.github.zimolab.jow.compiler.resolver
 
-import com.github.zimolab.jow.annotation.obj.JsObjectWrapperFunction
+import com.github.zimolab.jow.annotation.obj.JsObjectFunction
+import com.github.zimolab.jow.annotation.obj.typecast.TypeCastCategory
 import com.github.zimolab.jow.compiler.*
+import com.github.zimolab.jow.compiler.generator.TypeCast
 import com.github.zimolab.jow.compiler.qualifiedNameStr
 import com.github.zimolab.jow.compiler.simpleNameStr
 import com.google.devtools.ksp.symbol.KSAnnotation
@@ -23,17 +25,17 @@ class FunctionResolver(
         return declaration.qualifiedNameStr
     }
 
-    fun resolveParameters(): MutableList<ResolvedJsObjectWrapperFunction.FunctionParameter> {
-        val parameters = mutableListOf<ResolvedJsObjectWrapperFunction.FunctionParameter>()
+    fun resolveParameters(): MutableList<ResolvedFunction.FunctionParameter> {
+        val parameters = mutableListOf<ResolvedFunction.FunctionParameter>()
         declaration.parameters.forEach { param->
             val name = param.name?.asString()
             if (name == null) {
-                AnnotationProcessingError("在解析函数(${declaration.simpleNameStr})返回值时出现一个错误").let {
+                AnnotationProcessingError("在解析函数(${declaration.simpleNameStr})参数时出现一个错误").let {
                     logger.error(it)
                 }
             }
             parameters.add(
-                ResolvedJsObjectWrapperFunction.FunctionParameter(
+                ResolvedFunction.FunctionParameter(
                     name!!,
                     param.type.resolve(),
                     param.isVararg
@@ -52,8 +54,15 @@ class FunctionResolver(
         return rt
     }
 
-    fun resolveReturnTypeCastCategory(): String {
-        return resolveAnnotationArgument(JsObjectWrapperFunction::returnTypeCast.name, JsObjectWrapperFunction.DEFAULT_RETURN_TYPE_CAST)
+    fun resolveReturnTypeCastCategory(): TypeCastCategory {
+        val category = resolveAnnotationArgument(JsObjectFunction::returnTypeCast.name, JsObjectFunction.DEFAULT_RETURN_TYPE_CAST)
+        category.ifEmpty {
+            AnnotationProcessingError("@${JsObjectFunction::class.simpleName}注解的${JsObjectFunction::returnTypeCast.name}参数不可为空").let {
+                logger.error(it, throws = false)
+                throw it
+            }
+        }
+        return TypeCastCategory.of(category)
     }
 
     inline fun <reified T> resolveAnnotationArgument(argumentName: String, defaultValue: T): T {

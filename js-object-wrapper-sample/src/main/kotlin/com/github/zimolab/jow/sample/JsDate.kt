@@ -1,19 +1,18 @@
 package com.github.zimolab.jow.sample
 
-import com.github.zimolab.jow.annotation.obj.JsObjectWrapperClass
+import com.github.zimolab.jow.annotation.obj.JsObjectClass
 import com.github.zimolab.jsarray.base.JsArray
 import com.github.zimolab.jsarray.base.JsArrayInterface
-import com.github.zimolab.jow.annotation.obj.JsObjectWrapperFunction
-import com.github.zimolab.jow.annotation.obj.JsObjectWrapperProperty
+import com.github.zimolab.jow.annotation.obj.JsObjectFunction
+import com.github.zimolab.jow.annotation.obj.JsObjectProperty
 import com.github.zimolab.jow.annotation.obj.typecast.AUTO_DETERMINE
-import com.github.zimolab.jow.annotation.obj.typecast.NO_CAST
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.array.JsObjectWrapperArray
 import netscape.javascript.JSObject
 import java.security.Key
 import java.util.*
 
-@JsObjectWrapperClass
+@JsObjectClass
 interface JsDate: JsObjectWrapper {
 
     val field1: Int
@@ -24,7 +23,7 @@ interface JsDate: JsObjectWrapper {
     var field6: JsObjectWrapper?
     var field7: JsArrayInterface<Any?>?
     var field8: Any?
-    @JsObjectWrapperProperty(getterTypeCast = AUTO_DETERMINE)
+    @JsObjectProperty(getterTypeCast = AUTO_DETERMINE)
     var field9: List<String>
     var field10: JsArray<String>
     var field11: JsDateTime
@@ -33,13 +32,13 @@ interface JsDate: JsObjectWrapper {
     /** Returns a String representation of a date. The format of the String depends on the locale. */
     override fun toString(): String
 
-    @JsObjectWrapperFunction(undefinedAsNull = false, raiseExceptionOnUndefined = true)
+    @JsObjectFunction(undefinedAsNull = false, raiseExceptionOnUndefined = true)
     /** Returns a date as a String value. */
     fun toDateString(): String
 
-    @JsObjectWrapperFunction(undefinedAsNull = true)
+    @JsObjectFunction(undefinedAsNull = true)
     fun test1(): Unit
-    @JsObjectWrapperFunction(returnTypeCast = "__asJsDate__")
+    @JsObjectFunction(returnTypeCast = "__asJsDate__")
     fun test2(a: JsDateTime, b: JsDateTimeImp, c: Any, d: JsDate, vararg dates: JsDate): JsDateTimeImp
     fun test3(a: Int, b: JSObject?, c: Any, d: JsDate?, vararg dates: JsDate?)
     fun test4(a: Int, b: JsArray<Any?>, d: JsObjectWrapperArray<JsDate>?, vararg dates: Int)
@@ -58,7 +57,7 @@ interface JsDate: JsObjectWrapper {
     //fun <R> test14(vararg dates: Collection<Any?>)
 
     // 如果确实需要声明泛型函数，可以使用skip参数跳过解析，然后在子类中手动实现该函数
-    @JsObjectWrapperFunction(skip = true)
+    @JsObjectFunction(skip = true)
     fun <R> test15(): R?
 
     /** Returns a time as a String value. */

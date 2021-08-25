@@ -1,12 +1,12 @@
-package com.github.zimolab.jow.compiler.resolver;
+package com.github.zimolab.jow.compiler.resolver
 
-import com.github.zimolab.jow.annotation.obj.JsObjectWrapperFunction
+import com.github.zimolab.jow.annotation.obj.JsObjectFunction
 import com.github.zimolab.jow.compiler.generator.TypeCast
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSType
 
-class ResolvedJsObjectWrapperFunction(
+class ResolvedFunction(
     val originDeclaration: KSFunctionDeclaration,
     val originAnnotation: KSAnnotation?
 ) {
@@ -40,26 +40,26 @@ class ResolvedJsObjectWrapperFunction(
 
     inner class MetaData {
         val undefinedAsNull by lazy {
-            resolver.resolveAnnotationArgument(JsObjectWrapperFunction::undefinedAsNull.name, JsObjectWrapperFunction.UNDEFINED_AS_NULL)
+            resolver.resolveAnnotationArgument(JsObjectFunction::undefinedAsNull.name, JsObjectFunction.UNDEFINED_AS_NULL)
         }
 
         val raiseExceptionOnUndefined by lazy {
             if (undefinedAsNull)
                 false
             else
-                resolver.resolveAnnotationArgument(JsObjectWrapperFunction::raiseExceptionOnUndefined.name, JsObjectWrapperFunction.RAISE_EXCEPTION_ON_UNDEFINED)
+                resolver.resolveAnnotationArgument(JsObjectFunction::raiseExceptionOnUndefined.name, JsObjectFunction.RAISE_EXCEPTION_ON_UNDEFINED)
         }
 
         val skipped by lazy {
-            resolver.resolveAnnotationArgument(JsObjectWrapperFunction::skip.name, JsObjectWrapperFunction.SKIP)
+            resolver.resolveAnnotationArgument(JsObjectFunction::skip.name, JsObjectFunction.SKIP)
         }
 
         val jsMemberName by lazy {
-            resolver.resolveAnnotationArgument(JsObjectWrapperFunction::jsMemberName.name, simpleName).ifEmpty { simpleName }
+            resolver.resolveAnnotationArgument(JsObjectFunction::jsMemberName.name, simpleName).ifEmpty { simpleName }
         }
 
-        val returnTypeCast by lazy {
-            TypeCast.ofFunctionReturn(this@ResolvedJsObjectWrapperFunction)
+        val returnTypeCastCategory by lazy {
+            resolver.resolveReturnTypeCastCategory()
         }
     }
 }

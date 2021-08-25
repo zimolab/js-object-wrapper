@@ -1,12 +1,12 @@
 package com.github.zimolab.jow.compiler.resolver
 
-import com.github.zimolab.jow.annotation.obj.JsObjectWrapperProperty
+import com.github.zimolab.jow.annotation.obj.JsObjectProperty
 import com.github.zimolab.jow.compiler.generator.TypeCast
-import com.github.zimolab.jow.compiler.simpleName
+import com.github.zimolab.jow.compiler.utils.TypeUtils
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 
-class ResolvedJsObjectWrapperProperty(
+class ResolvedProperty(
     val declaration: KSPropertyDeclaration,
     val annotation: KSAnnotation?
 ) {
@@ -45,15 +45,15 @@ class ResolvedJsObjectWrapperProperty(
 
         val skipped by lazy {
             resolver.resolveAnnotationArgument(
-                JsObjectWrapperProperty::skip.name,
-                JsObjectWrapperProperty.SKIP
+                JsObjectProperty::skip.name,
+                JsObjectProperty.SKIP
             )
         }
 
         val undefinedAsNull by lazy {
             resolver.resolveAnnotationArgument(
-                JsObjectWrapperProperty::undefinedAsNull.name,
-                JsObjectWrapperProperty.UNDEFINED_AS_NULL
+                JsObjectProperty::undefinedAsNull.name,
+                JsObjectProperty.UNDEFINED_AS_NULL
             )
         }
 
@@ -62,17 +62,21 @@ class ResolvedJsObjectWrapperProperty(
                 false
             else
                 resolver.resolveAnnotationArgument(
-                    JsObjectWrapperProperty::raiseExceptionOnUndefined.name,
-                    JsObjectWrapperProperty.RAISE_EXCEPTION_ON_UNDEFINED
+                    JsObjectProperty::raiseExceptionOnUndefined.name,
+                    JsObjectProperty.RAISE_EXCEPTION_ON_UNDEFINED
                 )
         }
 
-        val getterTypeCast by lazy {
-           TypeCast.ofGetter(this@ResolvedJsObjectWrapperProperty)
+        val isNativeType by lazy {
+            TypeUtils.isNativeType(type) || TypeUtils.isVoidType(type) || TypeUtils.isAnyType(type)
         }
 
-        val setterTypeCast by lazy {
-            TypeCast.ofSetter(this@ResolvedJsObjectWrapperProperty)
+        val getterTypeCastCategory by lazy {
+            resolver.resolveGetterTypeCastCategory()
+        }
+
+        val setterTypeCastCategory by lazy {
+            resolver.resolveSetterTypeCastCategory()
         }
     }
 

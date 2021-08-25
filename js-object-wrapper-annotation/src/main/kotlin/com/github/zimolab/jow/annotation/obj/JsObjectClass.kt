@@ -1,7 +1,7 @@
 package com.github.zimolab.jow.annotation.obj
 
 @Target(AnnotationTarget.CLASS)
-annotation class JsObjectWrapperClass(
+annotation class JsObjectClass(
     val outputClassName: String = "",
     val outputFilename: String = "",
     val ignoreUnsupportedTypes: Boolean = true,

@@ -1,13 +1,13 @@
 package com.github.zimolab.jow.compiler
 
-import com.github.zimolab.jow.annotation.obj.JsObjectWrapperClass
-import com.github.zimolab.jow.annotation.obj.JsObjectWrapperFunction
-import com.github.zimolab.jow.annotation.obj.JsObjectWrapperProperty
+import com.github.zimolab.jow.annotation.obj.JsObjectClass
+import com.github.zimolab.jow.annotation.obj.JsObjectFunction
+import com.github.zimolab.jow.annotation.obj.JsObjectProperty
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.compiler.generator.JsObjectWrapperClassGenerator
-import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperClass
-import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperFunction
-import com.github.zimolab.jow.compiler.resolver.ResolvedJsObjectWrapperProperty
+import com.github.zimolab.jow.compiler.resolver.ResolvedClass
+import com.github.zimolab.jow.compiler.resolver.ResolvedFunction
+import com.github.zimolab.jow.compiler.resolver.ResolvedProperty
 import com.google.devtools.ksp.getDeclaredFunctions
 import com.google.devtools.ksp.getDeclaredProperties
 import com.google.devtools.ksp.isAbstract
@@ -23,7 +23,7 @@ import java.util.logging.FileHandler
 import java.util.logging.LogManager
 import java.util.logging.Logger
 
-
+@ExperimentalUnsignedTypes
 class JsObjectWrapperProcessor(
     val options: Map<String, String>,
     val kotlinVersion: KotlinVersion,
@@ -62,7 +62,7 @@ class JsObjectWrapperProcessor(
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         logger.debug("开始自动处理注解")
-        val symbols = resolver.getSymbolsWithAnnotation(JsObjectWrapperClass::class.qualifiedName!!)
+        val symbols = resolver.getSymbolsWithAnnotation(JsObjectClass::class.qualifiedName!!)
         val notProcessedSymbols = symbols.filter { !it.validate() }.toList()
         logger.debug("找到${symbols.count()}个被注解的符号")
         symbols
@@ -79,7 +79,7 @@ class JsObjectWrapperProcessor(
             super.visitClassDeclaration(classDeclaration, data)
             logger.debug("正在处理${classDeclaration}")
             if (!classDeclaration.subclassOf(JsObjectWrapper::class)) {
-                AnnotationProcessingError("被@${JsObjectWrapperClass::class.simpleName}注解的接口或者类必须实现${JsObjectWrapper::class.simpleName}接口").let {
+                AnnotationProcessingError("被@${JsObjectClass::class.simpleName}注解的接口或者类必须实现${JsObjectWrapper::class.simpleName}接口").let {
                     logger.error(it)
                 }
             }
@@ -90,7 +90,7 @@ class JsObjectWrapperProcessor(
                 if (classDeclaration.isAbstract())
                     processAnnotatedClass(annotatedClass = classDeclaration)
                 else {
-                    AnnotationProcessingError("@${JsObjectWrapperClass::class.simpleName}注解不能注解非抽象类").let {
+                    AnnotationProcessingError("@${JsObjectClass::class.simpleName}注解不能注解非抽象类").let {
                         logger.error(it, throws = false)
                         throw it
                     }
@@ -102,31 +102,31 @@ class JsObjectWrapperProcessor(
         }
     }
 
-    fun processAnnotatedInterface(annotatedInterface: KSClassDeclaration): ResolvedJsObjectWrapperClass? {
-        val annotation = annotatedInterface.findAnnotations(JsObjectWrapperClass::class).firstOrNull()
-            ?: AnnotationProcessingError("无法找到${JsObjectWrapperClass::class.simpleName}注解").let {
+    fun processAnnotatedInterface(annotatedInterface: KSClassDeclaration): ResolvedClass? {
+        val annotation = annotatedInterface.findAnnotations(JsObjectClass::class).firstOrNull()
+            ?: AnnotationProcessingError("无法找到${JsObjectClass::class.simpleName}注解").let {
                 logger.error(it)
                 return null
             }
-        val resolvedClass = ResolvedJsObjectWrapperClass(
+        val resolvedClass = ResolvedClass(
             originDeclaration = annotatedInterface,
             originAnnotation = annotation,
             options = options)
         // 解析全部函数
         annotatedInterface.getDeclaredFunctions().forEach {functionDeclaration->
-            val functionAnnotation = functionDeclaration.findAnnotations(JsObjectWrapperFunction::class).firstOrNull()
-            resolvedClass.addFunction(ResolvedJsObjectWrapperFunction(functionDeclaration, functionAnnotation))
+            val functionAnnotation = functionDeclaration.findAnnotations(JsObjectFunction::class).firstOrNull()
+            resolvedClass.addFunction(ResolvedFunction(functionDeclaration, functionAnnotation))
         }
 
         //TODO 解析全部属性
         annotatedInterface.getDeclaredProperties().forEach { propertyDeclaration->
-            val propertyAnnotation = propertyDeclaration.findAnnotations(JsObjectWrapperProperty::class).firstOrNull()
-            resolvedClass.addProperty(ResolvedJsObjectWrapperProperty(propertyDeclaration, propertyAnnotation))
+            val propertyAnnotation = propertyDeclaration.findAnnotations(JsObjectProperty::class).firstOrNull()
+            resolvedClass.addProperty(ResolvedProperty(propertyDeclaration, propertyAnnotation))
         }
         return resolvedClass
     }
 
-    fun processAnnotatedClass(annotatedClass: KSClassDeclaration): ResolvedJsObjectWrapperClass? {
+    fun processAnnotatedClass(annotatedClass: KSClassDeclaration): ResolvedClass? {
         logger.warning("对抽象类的处理程序尚未被实现，${annotatedClass}将被略过！")
         return null
     }
