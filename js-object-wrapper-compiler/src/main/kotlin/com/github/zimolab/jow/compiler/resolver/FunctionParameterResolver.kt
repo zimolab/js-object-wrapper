@@ -1,7 +1,7 @@
 package com.github.zimolab.jow.compiler.resolver
 
 import com.github.zimolab.jow.annotation.obj.JsObjectParameter
-import com.github.zimolab.jow.annotation.obj.typemapping.TypeCastStrategy
+import com.github.zimolab.jow.annotation.obj.typemapping.TypeMappingStrategy
 import com.github.zimolab.jow.compiler.AnnotationProcessingError
 import com.github.zimolab.jow.compiler.JsObjectWrapperProcessor
 import com.github.zimolab.jow.compiler.error
@@ -42,7 +42,7 @@ class FunctionParameterResolver(
             annotation.findArgument(argumentName, defaultValue)
     }
 
-    fun resolveTypeCastCategory(): TypeCastStrategy {
+    fun resolveTypeCastCategory(): TypeMappingStrategy {
         val category = resolveAnnotationArgument(JsObjectParameter::typeCast.name, JsObjectParameter.DEFAULT_TYPE_CAST_STRATEGY)
         category.ifEmpty {
             AnnotationProcessingError("@${JsObjectParameter::class.simpleName}注解的的${JsObjectParameter::typeCast.name}参数不可为空").let {
@@ -50,6 +50,6 @@ class FunctionParameterResolver(
                 throw it
             }
         }
-        return TypeCastStrategy.of(category)
+        return TypeMappingStrategy.of(category)
     }
 }

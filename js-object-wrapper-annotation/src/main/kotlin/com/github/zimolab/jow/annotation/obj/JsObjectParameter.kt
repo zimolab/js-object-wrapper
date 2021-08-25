@@ -1,6 +1,6 @@
 package com.github.zimolab.jow.annotation.obj
 
-import com.github.zimolab.jow.annotation.obj.typemapping.TypeCastStrategy.Companion.NO_CAST_EXCEPT_BUILTIN
+import com.github.zimolab.jow.annotation.obj.typemapping.TypeMappingStrategy.Companion.NO_MAPPING_EXCEPT_BUILTIN
 
 /**
  * @property typeCast String
@@ -11,6 +11,6 @@ annotation class JsObjectParameter(
     val typeCast: String = DEFAULT_TYPE_CAST_STRATEGY
 ) {
     companion object {
-        const val DEFAULT_TYPE_CAST_STRATEGY = NO_CAST_EXCEPT_BUILTIN
+        const val DEFAULT_TYPE_CAST_STRATEGY = NO_MAPPING_EXCEPT_BUILTIN
     }
 }

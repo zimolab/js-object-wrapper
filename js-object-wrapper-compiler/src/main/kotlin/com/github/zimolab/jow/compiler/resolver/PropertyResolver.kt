@@ -1,7 +1,7 @@
 package com.github.zimolab.jow.compiler.resolver
 
 import com.github.zimolab.jow.annotation.obj.JsObjectProperty
-import com.github.zimolab.jow.annotation.obj.typemapping.TypeCastStrategy
+import com.github.zimolab.jow.annotation.obj.typemapping.TypeMappingStrategy
 import com.github.zimolab.jow.compiler.*
 import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.symbol.KSAnnotation
@@ -58,7 +58,7 @@ class PropertyResolver(
         }
     }
 
-    fun resolveGetterTypeCastCategory(): TypeCastStrategy {
+    fun resolveGetterTypeCastCategory(): TypeMappingStrategy {
         val category =
             resolveAnnotationArgument(JsObjectProperty::getterTypeCast.name, JsObjectProperty.DEFAULT_TYPE_CAST_STRATEGY)
         category.ifEmpty {
@@ -68,10 +68,10 @@ class PropertyResolver(
                 logger.error(it)
             }
         }
-        return TypeCastStrategy.of(category)
+        return TypeMappingStrategy.of(category)
     }
 
-    fun resolveSetterTypeCastCategory(): TypeCastStrategy {
+    fun resolveSetterTypeCastCategory(): TypeMappingStrategy {
         val category =
             resolveAnnotationArgument(JsObjectProperty::setterTypeCast.name, JsObjectProperty.DEFAULT_TYPE_CAST_STRATEGY)
         category.ifEmpty {
@@ -81,7 +81,7 @@ class PropertyResolver(
                 logger.error(it)
             }
         }
-        return TypeCastStrategy.of(category)
+        return TypeMappingStrategy.of(category)
     }
 
 }

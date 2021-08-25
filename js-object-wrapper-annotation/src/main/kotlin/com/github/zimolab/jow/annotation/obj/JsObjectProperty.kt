@@ -1,6 +1,6 @@
 package com.github.zimolab.jow.annotation.obj
 
-import com.github.zimolab.jow.annotation.obj.typemapping.TypeCastStrategy.Companion.AUTO_DETERMINE
+import com.github.zimolab.jow.annotation.obj.typemapping.TypeMappingStrategy.Companion.AUTO_DETERMINE
 
 /**
  *

@@ -185,7 +185,7 @@ class TypeCast private constructor(
             val nativeType = property.meta.isNativeType
 
             return when (category) {
-                is TypeCastStrategy.AutoDetermine -> {
+                is TypeMappingStrategy.AutoDetermine -> {
                     if (nativeType) {
                         TypeCast(
                             typeCastMethod = TypeCastMethod.NO_CAST,
@@ -216,7 +216,7 @@ class TypeCast private constructor(
                     }
                 }
 
-                is TypeCastStrategy.NoCast -> {
+                is TypeMappingStrategy.NoMapping -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.NO_CAST,
                         target = TypeCastTarget.PROP_SETTER,
@@ -226,7 +226,7 @@ class TypeCast private constructor(
                     )
                 }
 
-                is TypeCastStrategy.AutoGenerate -> {
+                is TypeMappingStrategy.AutoGenerate -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.CAST_FUNCTION,
                         target = TypeCastTarget.PROP_SETTER,
@@ -236,7 +236,7 @@ class TypeCast private constructor(
                     )
                 }
 
-                is TypeCastStrategy.NoCastExceptBuiltin -> {
+                is TypeMappingStrategy.NoMappingExceptBuiltin -> {
                     val builtinFunc = getBuiltinTypeCastFunction(property.type)
                     if (builtinFunc == null) {
                         TypeCast(
@@ -257,7 +257,7 @@ class TypeCast private constructor(
                     }
                 }
 
-                is TypeCastStrategy.UserSpecify -> {
+                is TypeMappingStrategy.UserSpecify -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.CAST_FUNCTION,
                         target = TypeCastTarget.PROP_SETTER,
@@ -273,7 +273,7 @@ class TypeCast private constructor(
             val category = property.meta.getterTypeCastCategory
             val nativeType = property.meta.isNativeType
             return when (category) {
-                is TypeCastStrategy.AutoDetermine -> {
+                is TypeMappingStrategy.AutoDetermine -> {
                     // getter无内置的类型转换函数
                     if (nativeType) {
                          TypeCast(
@@ -293,7 +293,7 @@ class TypeCast private constructor(
                         )
                 }
 
-                is TypeCastStrategy.NoCast -> {
+                is TypeMappingStrategy.NoMapping -> {
                     if (nativeType) {
                         TypeCast(
                             typeCastMethod = TypeCastMethod.NO_CAST,
@@ -312,7 +312,7 @@ class TypeCast private constructor(
                     }
                 }
 
-                is TypeCastStrategy.AutoGenerate -> {
+                is TypeMappingStrategy.AutoGenerate -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.CAST_FUNCTION,
                         target = TypeCastTarget.PROP_GETTER,
@@ -321,14 +321,14 @@ class TypeCast private constructor(
                         isBuiltinFunction = false
                     )
                 }
-                is TypeCastStrategy.NoCastExceptBuiltin -> {
+                is TypeMappingStrategy.NoMappingExceptBuiltin -> {
                     AnnotationProcessingError("${category.name}不适用于${JsObjectProperty::getterTypeCast.name}参数").let {
                         logger.error(it, throws = false)
                         throw it
                     }
                 }
 
-                is TypeCastStrategy.UserSpecify -> {
+                is TypeMappingStrategy.UserSpecify -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.CAST_FUNCTION,
                         target = TypeCastTarget.PROP_GETTER,
@@ -345,7 +345,7 @@ class TypeCast private constructor(
             val nativeType = parameter.meta.isNativeType
 
             return when (category) {
-                is TypeCastStrategy.AutoDetermine -> {
+                is TypeMappingStrategy.AutoDetermine -> {
                     if (nativeType) {
                         TypeCast(
                             typeCastMethod = TypeCastMethod.NO_CAST,
@@ -376,7 +376,7 @@ class TypeCast private constructor(
                     }
                 }
 
-                is TypeCastStrategy.NoCast -> {
+                is TypeMappingStrategy.NoMapping -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.NO_CAST,
                         target = TypeCastTarget.FUNC_PARAMETER,
@@ -386,7 +386,7 @@ class TypeCast private constructor(
                     )
                 }
 
-                is TypeCastStrategy.AutoGenerate -> {
+                is TypeMappingStrategy.AutoGenerate -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.CAST_FUNCTION,
                         target = TypeCastTarget.FUNC_PARAMETER,
@@ -396,7 +396,7 @@ class TypeCast private constructor(
                     )
                 }
 
-                is TypeCastStrategy.NoCastExceptBuiltin -> {
+                is TypeMappingStrategy.NoMappingExceptBuiltin -> {
                     val builtinFunc = getBuiltinTypeCastFunction(parameter.type)
                     if (builtinFunc == null) {
                         TypeCast(
@@ -417,7 +417,7 @@ class TypeCast private constructor(
                     }
                 }
 
-                is TypeCastStrategy.UserSpecify -> {
+                is TypeMappingStrategy.UserSpecify -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.CAST_FUNCTION,
                         target = TypeCastTarget.FUNC_PARAMETER,
@@ -436,7 +436,7 @@ class TypeCast private constructor(
                     func.returnType
                 )
             return when (category) {
-                is TypeCastStrategy.AutoDetermine -> {
+                is TypeMappingStrategy.AutoDetermine -> {
                     if (nativeType) {
                         TypeCast(
                             typeCastMethod = TypeCastMethod.NO_CAST,
@@ -455,7 +455,7 @@ class TypeCast private constructor(
                         )
                     }
                 }
-                is TypeCastStrategy.AutoGenerate -> {
+                is TypeMappingStrategy.AutoGenerate -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.CAST_FUNCTION,
                         target = TypeCastTarget.FUNC_RETURN,
@@ -464,7 +464,7 @@ class TypeCast private constructor(
                         isBuiltinFunction = false
                     )
                 }
-                is TypeCastStrategy.NoCast -> {
+                is TypeMappingStrategy.NoMapping -> {
                     if (!nativeType) {
                         AnnotationProcessingError("${category.name}不适用于${func.returnType.simpleName}类型的返回值").let {
                             logger.error(it)
@@ -478,13 +478,13 @@ class TypeCast private constructor(
                         isBuiltinFunction = false
                     )
                 }
-                is TypeCastStrategy.NoCastExceptBuiltin -> {
+                is TypeMappingStrategy.NoMappingExceptBuiltin -> {
                     AnnotationProcessingError("${category.name}不适用于${JsObjectFunction::returnTypeCast.name}参数").let {
                         logger.error(it, throws = false)
                         throw it
                     }
                 }
-                is TypeCastStrategy.UserSpecify -> {
+                is TypeMappingStrategy.UserSpecify -> {
                     TypeCast(
                         typeCastMethod = TypeCastMethod.CAST_FUNCTION,
                         target = TypeCastTarget.FUNC_RETURN,

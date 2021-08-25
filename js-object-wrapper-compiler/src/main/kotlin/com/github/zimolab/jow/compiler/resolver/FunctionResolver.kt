@@ -2,7 +2,7 @@ package com.github.zimolab.jow.compiler.resolver
 
 import com.github.zimolab.jow.annotation.obj.JsObjectFunction
 import com.github.zimolab.jow.annotation.obj.JsObjectParameter
-import com.github.zimolab.jow.annotation.obj.typemapping.TypeCastStrategy
+import com.github.zimolab.jow.annotation.obj.typemapping.TypeMappingStrategy
 import com.github.zimolab.jow.compiler.*
 import com.github.zimolab.jow.compiler.qualifiedNameStr
 import com.github.zimolab.jow.compiler.simpleNameStr
@@ -66,7 +66,7 @@ class FunctionResolver(
         return rt
     }
 
-    fun resolveReturnTypeCastCategory(): TypeCastStrategy {
+    fun resolveReturnTypeCastCategory(): TypeMappingStrategy {
         val category = resolveAnnotationArgument(JsObjectFunction::returnTypeCast.name, JsObjectFunction.DEFAULT_RETURN_TYPE_CAST_STRATEGY)
         category.ifEmpty {
             AnnotationProcessingError("@${JsObjectFunction::class.simpleName}注解的${JsObjectFunction::returnTypeCast.name}参数不可为空").let {
@@ -74,7 +74,7 @@ class FunctionResolver(
                 throw it
             }
         }
-        return TypeCastStrategy.of(category)
+        return TypeMappingStrategy.of(category)
     }
 
     inline fun <reified T> resolveAnnotationArgument(argumentName: String, defaultValue: T): T {
