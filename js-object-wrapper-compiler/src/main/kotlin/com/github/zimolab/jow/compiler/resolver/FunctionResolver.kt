@@ -13,8 +13,8 @@ import java.util.logging.Logger
 
 @ExperimentalUnsignedTypes
 class FunctionResolver(
-    val declaration: KSFunctionDeclaration,
-    val annotation: KSAnnotation?
+    private val declaration: KSFunctionDeclaration,
+    private val annotation: KSAnnotation?
 ) {
     private val logger: Logger = Logger.getLogger(JsObjectWrapperProcessor::class.java.canonicalName)
 
@@ -26,27 +26,7 @@ class FunctionResolver(
         return declaration.qualifiedNameStr
     }
 
-    fun resolveParameters(): MutableList<ResolvedFunction.FunctionParameter> {
-        val parameters = mutableListOf<ResolvedFunction.FunctionParameter>()
-        declaration.parameters.forEach { param->
-            val name = param.name?.asString()
-            if (name == null) {
-                AnnotationProcessingError("在解析函数(${declaration.simpleNameStr})参数时出现一个错误").let {
-                    logger.error(it)
-                }
-            }
-            parameters.add(
-                ResolvedFunction.FunctionParameter(
-                    name!!,
-                    param.type.resolve(),
-                    param.isVararg
-                )
-            )
-        }
-        return parameters
-    }
-
-    fun resolveParameters2(): MutableList<ResolvedFunctionParameter> {
+    fun resolveParameters(): MutableList<ResolvedFunctionParameter> {
         val parameters = mutableListOf<ResolvedFunctionParameter>()
         declaration.parameters.forEach { param->
             val annotation = param.findAnnotations(JsObjectParameter::class).firstOrNull()
@@ -66,7 +46,7 @@ class FunctionResolver(
         return rt
     }
 
-    fun resolveReturnTypeCastCategory(): TypeMappingStrategy {
+    fun resolveReturnTypeMappingStrategy(): TypeMappingStrategy {
         val category = resolveAnnotationArgument(JsObjectFunction::returnTypeMappingStrategy.name, JsObjectFunction.DEFAULT_RETURN_TYPE_MAPPING_STRATEGY)
         category.ifEmpty {
             AnnotationProcessingError("@${JsObjectFunction::class.simpleName}注解的${JsObjectFunction::returnTypeMappingStrategy.name}参数不可为空").let {
@@ -77,10 +57,27 @@ class FunctionResolver(
         return TypeMappingStrategy.of(category)
     }
 
-    inline fun <reified T> resolveAnnotationArgument(argumentName: String, defaultValue: T): T {
+    private inline fun <reified T> resolveAnnotationArgument(argumentName: String, defaultValue: T): T {
         return if (annotation == null)
             defaultValue
         else
             annotation.findArgument(argumentName, defaultValue)
+    }
+
+    fun resolveUndefinedAsNull(): Boolean {
+        return resolveAnnotationArgument(JsObjectFunction::undefinedAsNull.name, JsObjectFunction.UNDEFINED_AS_NULL)
+    }
+
+    fun resolveRaiseExceptionOnUndefined(): Boolean {
+        return resolveAnnotationArgument(JsObjectFunction::raiseExceptionOnUndefined.name, JsObjectFunction.RAISE_EXCEPTION_ON_UNDEFINED)
+    }
+
+    fun resolveSkipped(): Boolean {
+        return resolveAnnotationArgument(JsObjectFunction::skip.name, JsObjectFunction.SKIP)
+    }
+
+    fun resolveJsMemberName(): String {
+        return  resolveAnnotationArgument(JsObjectFunction::jsMemberName.name, "")
+
     }
 }

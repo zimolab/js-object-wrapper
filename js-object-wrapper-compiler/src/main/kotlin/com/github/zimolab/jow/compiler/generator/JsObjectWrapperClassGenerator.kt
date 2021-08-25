@@ -199,6 +199,7 @@ class JsObjectWrapperClassGenerator(
             classBuilder.addAnnotation(warnSuppressAnnotation)
         }
 
+        // TODO
         private fun createCompanionMembers(classBuilder: TypeSpec.Builder, companionObjectBuilder: TypeSpec.Builder) {
 
         }
@@ -227,7 +228,7 @@ class JsObjectWrapperClassGenerator(
             val isAnyType = TypeUtils.isAnyType(resolvedProperty.type)
 
             // getter
-            val getterTypeCast = TypeCast.of(TypeCastTarget.PROP_GETTER, resolvedProperty, classBuilder)
+            val getterTypeMapper = TypeMapper.of(TypeMappingTarget.PROP_GETTER, resolvedProperty, classBuilder)
             val getterBuilder = FunSpec.getterBuilder()
             val getterCodeTemplate = """
                 val ret = ${JsObjectWrapper::source.name}.getMember(%S)
@@ -267,8 +268,8 @@ class JsObjectWrapperClassGenerator(
                     return  ret
                     """
                 } else {
-                    if (getterTypeCast.typeCastMethod == TypeCastMethod.CAST_FUNCTION)
-                        "return ${getterTypeCast.functionName}(ret)"
+                    if (getterTypeMapper.method == TypeMappingMethod.USE_MAPPING_FUNCTION)
+                        "return ${getterTypeMapper.functionName}(ret)"
                     else
                         "return ret as ${resolvedProperty.type.asTypeName().copy(nullable = false)}"
                 }
@@ -291,13 +292,13 @@ class JsObjectWrapperClassGenerator(
             //~getter
 
             //setter
-            val setterTypeCast = TypeCast.of(TypeCastTarget.PROP_SETTER, resolvedProperty, classBuilder)
+            val setterTypeMapper = TypeMapper.of(TypeMappingTarget.PROP_SETTER, resolvedProperty, classBuilder)
             val setterParamName = "v"
             if (resolvedProperty.mutable) {
                 val setterBuilder = FunSpec.setterBuilder()
-                val setterCodeTemplate = if (setterTypeCast.typeCastMethod == TypeCastMethod.CAST_FUNCTION) {
+                val setterCodeTemplate = if (setterTypeMapper.method == TypeMappingMethod.USE_MAPPING_FUNCTION) {
                     """
-                    ${JsObjectWrapper::source.name}.setMember(%S, ${setterTypeCast.functionName}($setterParamName))
+                    ${JsObjectWrapper::source.name}.setMember(%S, ${setterTypeMapper.functionName}($setterParamName))
                     """
                 } else {
                     """${JsObjectWrapper::source.name}.setMember(%S, $setterParamName)"""
@@ -362,8 +363,7 @@ class JsObjectWrapperClassGenerator(
         ): FunSpec {
             val functionName = resolvedFunction.simpleName
             val jsMemberName = resolvedFunction.meta.jsMemberName
-            resolvedFunction.parameters
-            val parameters = resolvedFunction.meta.parameters
+            val parameters = resolvedFunction.parameters
             val functionReturnType = resolvedFunction.returnType
             val raiseExceptionOnUndefined = resolvedFunction.meta.raiseExceptionOnUndefined
 
@@ -386,8 +386,8 @@ class JsObjectWrapperClassGenerator(
             // 包括了可自定义的类型转换处理、支持vararg参数等特性
             val argumentList = mutableListOf<String>()
             parameters.forEach { param->
-                val paramTypeCast = TypeCast.of(TypeCastTarget.FUNC_PARAMETER, param, classBuilder)
-                argumentList.add(param.meta.asArgumentString(paramTypeCast))
+                val paramTypeMapper = TypeMapper.of(TypeMappingTarget.FUNC_PARAMETER, param, classBuilder)
+                argumentList.add(param.meta.asArgumentString(paramTypeMapper))
             }
 
             // 添加函数体
@@ -398,8 +398,8 @@ class JsObjectWrapperClassGenerator(
             val undefinedAsNull = resolvedFunction.meta.undefinedAsNull
 
             // 如果返回值不是支持直接转换的原生类型，则需要添加一个额外的类型转换函数（模板方法），用来对返回值进行转换
-            val returnTypeCast = TypeCast.of(TypeCastTarget.FUNC_RETURN, resolvedFunction, classBuilder)
-            val returnTypeCastFunc = returnTypeCast.functionName
+            val returnTypeMapper = TypeMapper.of(TypeMappingTarget.FUNC_RETURN, resolvedFunction, classBuilder)
+            val returnTypeMappingFunc = returnTypeMapper.functionName
 
             val codeTemplate = """
                 val ret = ${JsObjectWrapper::source.name}.call(%S, %L)
@@ -429,7 +429,7 @@ class JsObjectWrapperClassGenerator(
                     "if(ret !is %T)\n throw RuntimeException(\"the type of return value is not as expected.\")\n" +
                             "return ret"
                 else
-                    "return ${returnTypeCastFunc}(ret)"
+                    "return ${returnTypeMappingFunc}(ret)"
             }
             """
 

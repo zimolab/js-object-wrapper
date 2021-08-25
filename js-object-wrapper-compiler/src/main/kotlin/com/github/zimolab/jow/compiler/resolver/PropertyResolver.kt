@@ -58,30 +58,30 @@ class PropertyResolver(
         }
     }
 
-    fun resolveGetterTypeCastCategory(): TypeMappingStrategy {
-        val category =
+    fun resolveGetterTypeMappingStrategy(): TypeMappingStrategy {
+        val strategy =
             resolveAnnotationArgument(JsObjectProperty::getterTypeMappingStrategy.name, JsObjectProperty.DEFAULT_TYPE_MAPPING_STRATEGY)
-        category.ifEmpty {
+        strategy.ifEmpty {
             AnnotationProcessingError(
                 "@${JsObjectProperty::class.simpleName}注解的${JsObjectProperty::getterTypeMappingStrategy.name}参数不可为空"
             ).let {
                 logger.error(it)
             }
         }
-        return TypeMappingStrategy.of(category)
+        return TypeMappingStrategy.of(strategy)
     }
 
-    fun resolveSetterTypeCastCategory(): TypeMappingStrategy {
-        val category =
+    fun resolveSetterTypeMappingStrategy(): TypeMappingStrategy {
+        val strategy =
             resolveAnnotationArgument(JsObjectProperty::setterTypeMappingStrategy.name, JsObjectProperty.DEFAULT_TYPE_MAPPING_STRATEGY)
-        category.ifEmpty {
+        strategy.ifEmpty {
             AnnotationProcessingError(
                 "@${JsObjectProperty::class.simpleName}注解的${JsObjectProperty::setterTypeMappingStrategy.name}参数不可为空"
             ).let {
                 logger.error(it)
             }
         }
-        return TypeMappingStrategy.of(category)
+        return TypeMappingStrategy.of(strategy)
     }
 
 }

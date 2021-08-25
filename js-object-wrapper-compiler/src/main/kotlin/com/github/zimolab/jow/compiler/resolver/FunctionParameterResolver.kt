@@ -42,14 +42,14 @@ class FunctionParameterResolver(
             annotation.findArgument(argumentName, defaultValue)
     }
 
-    fun resolveTypeCastCategory(): TypeMappingStrategy {
-        val category = resolveAnnotationArgument(JsObjectParameter::typeMappingStrategy.name, JsObjectParameter.DEFAULT_TYPE_MAPPING_STRATEGY)
-        category.ifEmpty {
+    fun resolveTypeMappingStrategy(): TypeMappingStrategy {
+        val strategy = resolveAnnotationArgument(JsObjectParameter::typeMappingStrategy.name, JsObjectParameter.DEFAULT_TYPE_MAPPING_STRATEGY)
+        strategy.ifEmpty {
             AnnotationProcessingError("@${JsObjectParameter::class.simpleName}注解的的${JsObjectParameter::typeMappingStrategy.name}参数不可为空").let {
                 logger.error(it, throws = false)
                 throw it
             }
         }
-        return TypeMappingStrategy.of(category)
+        return TypeMappingStrategy.of(strategy)
     }
 }

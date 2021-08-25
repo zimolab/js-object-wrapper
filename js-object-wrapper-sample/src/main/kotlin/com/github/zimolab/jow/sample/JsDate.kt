@@ -36,7 +36,7 @@ interface JsDate: JsObjectWrapper {
     /** Returns a date as a String value. */
     fun toDateString(): String
 
-    @JsObjectFunction(undefinedAsNull = true)
+    @JsObjectFunction(undefinedAsNull = true, jsMemberName = "test_1")
     fun test1(): Unit
     @JsObjectFunction(returnTypeMappingStrategy = "__asJsDate__")
     //fun test2(a: JsDateTime, b: JsDateTimeImp, c: Any, d: JsDate, vararg dates: JsDate): JsDateTimeImp

@@ -1,15 +1,15 @@
 package com.github.zimolab.jow.compiler.resolver
 
-import com.github.zimolab.jow.compiler.generator.TypeCast
-import com.github.zimolab.jow.compiler.generator.TypeCastMethod
+import com.github.zimolab.jow.compiler.generator.TypeMapper
+import com.github.zimolab.jow.compiler.generator.TypeMappingMethod
 import com.github.zimolab.jow.compiler.utils.TypeUtils
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSValueParameter
 
 @ExperimentalUnsignedTypes
 class ResolvedFunctionParameter(
-    val declaration: KSValueParameter,
-    val annotation: KSAnnotation? = null
+    declaration: KSValueParameter,
+    annotation: KSAnnotation? = null
 ) {
     private val resolver = FunctionParameterResolver(declaration, annotation)
     val name by lazy {
@@ -34,15 +34,15 @@ class ResolvedFunctionParameter(
             TypeUtils.isNativeType(type) || TypeUtils.isAnyType(type) || TypeUtils.isVoidType(type)
         }
 
-        val typeCastCategory by lazy {
-            resolver.resolveTypeCastCategory()
+        val typeMappingStrategy by lazy {
+            resolver.resolveTypeMappingStrategy()
         }
 
-        fun asArgumentString(typeCast: TypeCast): String {
+        fun asArgumentString(typeMapper: TypeMapper): String {
             return if (isVararg) {
                 val args = name
-                val mapped = if (typeCast.typeCastMethod == TypeCastMethod.CAST_FUNCTION) {
-                    "${typeCast.functionName}(it)"
+                val mapped = if (typeMapper.method == TypeMappingMethod.USE_MAPPING_FUNCTION) {
+                    "${typeMapper.functionName}(it)"
                 } else {
                     null
                 }
@@ -62,8 +62,8 @@ class ResolvedFunctionParameter(
                 }
             } else {
                 val arg = name
-                if (typeCast.typeCastMethod == TypeCastMethod.CAST_FUNCTION) {
-                    "${typeCast.functionName}($arg)"
+                if (typeMapper.method == TypeMappingMethod.USE_MAPPING_FUNCTION) {
+                    "${typeMapper.functionName}($arg)"
                 } else {
                     arg
                 }

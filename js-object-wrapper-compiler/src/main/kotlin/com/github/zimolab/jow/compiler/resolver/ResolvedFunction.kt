@@ -1,18 +1,15 @@
 package com.github.zimolab.jow.compiler.resolver
 
 import com.github.zimolab.jow.annotation.obj.JsObjectFunction
-import com.github.zimolab.jow.compiler.generator.TypeCast
-import com.github.zimolab.jow.compiler.generator.TypeCastMethod
-import com.github.zimolab.jow.compiler.generator.TypeCastTarget
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSType
-import com.squareup.kotlinpoet.TypeSpec
 
+@Suppress("unused")
 @ExperimentalUnsignedTypes
 class ResolvedFunction(
-    val originDeclaration: KSFunctionDeclaration,
-    val originAnnotation: KSAnnotation?
+    originDeclaration: KSFunctionDeclaration,
+    originAnnotation: KSAnnotation?
 ) {
     val resolver = FunctionResolver(originDeclaration, originAnnotation)
 
@@ -44,30 +41,26 @@ class ResolvedFunction(
 
     inner class MetaData {
         val undefinedAsNull by lazy {
-            resolver.resolveAnnotationArgument(JsObjectFunction::undefinedAsNull.name, JsObjectFunction.UNDEFINED_AS_NULL)
+            resolver.resolveUndefinedAsNull()
         }
 
         val raiseExceptionOnUndefined by lazy {
             if (undefinedAsNull)
                 false
             else
-                resolver.resolveAnnotationArgument(JsObjectFunction::raiseExceptionOnUndefined.name, JsObjectFunction.RAISE_EXCEPTION_ON_UNDEFINED)
+                resolver.resolveRaiseExceptionOnUndefined()
         }
 
         val skipped by lazy {
-            resolver.resolveAnnotationArgument(JsObjectFunction::skip.name, JsObjectFunction.SKIP)
+            resolver.resolveSkipped()
         }
 
         val jsMemberName by lazy {
-            resolver.resolveAnnotationArgument(JsObjectFunction::jsMemberName.name, simpleName).ifEmpty { simpleName }
+            resolver.resolveJsMemberName().ifEmpty { simpleName }
         }
 
-        val returnTypeCastCategory by lazy {
-            resolver.resolveReturnTypeCastCategory()
-        }
-
-        val parameters by lazy {
-            resolver.resolveParameters2()
+        val returnTypeMappingStrategy by lazy {
+            resolver.resolveReturnTypeMappingStrategy()
         }
     }
 }
