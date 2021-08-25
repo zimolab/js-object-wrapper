@@ -5,9 +5,9 @@ import com.github.zimolab.jow.annotation.obj.JsObjectFunction
 import com.github.zimolab.jow.annotation.obj.JsObjectProperty
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.compiler.generator.JsObjectWrapperClassGenerator
-import com.github.zimolab.jow.compiler.resolver.ResolvedClass
-import com.github.zimolab.jow.compiler.resolver.ResolvedFunction
-import com.github.zimolab.jow.compiler.resolver.ResolvedProperty
+import com.github.zimolab.jow.compiler.resolve.ResolvedClass
+import com.github.zimolab.jow.compiler.resolve.ResolvedFunction
+import com.github.zimolab.jow.compiler.resolve.ResolvedProperty
 import com.google.devtools.ksp.getDeclaredFunctions
 import com.google.devtools.ksp.getDeclaredProperties
 import com.google.devtools.ksp.isAbstract

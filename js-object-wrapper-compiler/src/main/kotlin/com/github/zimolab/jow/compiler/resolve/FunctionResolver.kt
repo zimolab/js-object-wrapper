@@ -1,4 +1,4 @@
-package com.github.zimolab.jow.compiler.resolver
+package com.github.zimolab.jow.compiler.resolve
 
 import com.github.zimolab.jow.annotation.obj.JsObjectFunction
 import com.github.zimolab.jow.annotation.obj.JsObjectParameter

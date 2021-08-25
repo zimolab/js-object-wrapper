@@ -3,9 +3,9 @@ package com.github.zimolab.jow.compiler.generator
 import com.github.zimolab.jow.annotation.obj.JsObjectClass
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.compiler.*
-import com.github.zimolab.jow.compiler.resolver.ResolvedClass
-import com.github.zimolab.jow.compiler.resolver.ResolvedFunction
-import com.github.zimolab.jow.compiler.resolver.ResolvedProperty
+import com.github.zimolab.jow.compiler.resolve.ResolvedClass
+import com.github.zimolab.jow.compiler.resolve.ResolvedFunction
+import com.github.zimolab.jow.compiler.resolve.ResolvedProperty
 import com.github.zimolab.jow.compiler.utils.TypeUtils
 import com.github.zimolab.jsarray.base.JsArrayInterface
 import com.google.devtools.ksp.processing.CodeGenerator

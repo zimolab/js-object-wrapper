@@ -1,4 +1,4 @@
-package com.github.zimolab.jow.compiler.resolver
+package com.github.zimolab.jow.compiler.resolve
 
 import com.github.zimolab.jow.annotation.obj.JsObjectProperty
 import com.github.zimolab.jow.annotation.obj.typemapping.TypeMappingStrategy
