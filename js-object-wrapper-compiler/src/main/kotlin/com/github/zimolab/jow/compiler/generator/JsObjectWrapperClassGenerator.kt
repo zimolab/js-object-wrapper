@@ -10,7 +10,6 @@ import com.github.zimolab.jow.compiler.utils.TypeUtils
 import com.github.zimolab.jsarray.base.JsArrayInterface
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
-import com.google.devtools.ksp.symbol.KSType
 import com.squareup.kotlinpoet.*
 import netscape.javascript.JSObject
 import org.kotlin.formatter.KotlinFormatter
@@ -35,9 +34,9 @@ class JsObjectWrapperClassGenerator(
                 "Generate at ${LocalDateTime.now()}"
         val CodeFormatter = KotlinFormatter()
 
-        val warningSuppressForClass = listOf(
+        val WARNING_SUPPRESS_FOR_CLASS = listOf(
             "FunctionName", "RedundantVisibilityModifier", "RemoveRedundantQualifierName", "RedundantUnitReturnType",
-            "UNUSED_VARIABLE", "RedundantUnitExpression"
+            "UNUSED_VARIABLE", "RedundantUnitExpression", "TrailingComma"
         )
 
     }
@@ -195,7 +194,7 @@ class JsObjectWrapperClassGenerator(
             // 添加@Suppress，抑制一些警告信息
             val warnSuppressAnnotation =
                 AnnotationSpec.builder(Suppress::class).apply {
-                    warningSuppressForClass.forEach {suppress-> addMember("%S", suppress) }
+                    WARNING_SUPPRESS_FOR_CLASS.forEach {suppress-> addMember("%S", suppress) }
                 }.build()
             classBuilder.addAnnotation(warnSuppressAnnotation)
         }
@@ -363,7 +362,7 @@ class JsObjectWrapperClassGenerator(
         ): FunSpec {
             val functionName = resolvedFunction.simpleName
             val jsMemberName = resolvedFunction.meta.jsMemberName
-            val functionParameters = resolvedFunction.parameters
+            resolvedFunction.parameters
             val parameters = resolvedFunction.meta.parameters
             val functionReturnType = resolvedFunction.returnType
             val raiseExceptionOnUndefined = resolvedFunction.meta.raiseExceptionOnUndefined
@@ -373,7 +372,7 @@ class JsObjectWrapperClassGenerator(
                 .addModifiers(KModifier.OVERRIDE)
                 .returns(functionReturnType.asTypeName())
 
-            // 添加函数参数
+            // 添加函数参数（形式参数）
             parameters.forEach { param ->
                 val paramSpec = if (param.isVararg) {
                     ParameterSpec.builder(param.name, param.type.asTypeName(), KModifier.VARARG).build()
@@ -382,6 +381,9 @@ class JsObjectWrapperClassGenerator(
                 }
                 functionBuilder.addParameter(paramSpec)
             }
+
+            // 底层调用call()函数所需的参数列表（实参）
+            // 包括了可自定义的类型转换处理、支持vararg参数等特性
             val argumentList = mutableListOf<String>()
             parameters.forEach { param->
                 val paramTypeCast = TypeCast.of(TypeCastTarget.FUNC_PARAMETER, param, classBuilder)
@@ -389,9 +391,6 @@ class JsObjectWrapperClassGenerator(
             }
 
             // 添加函数体
-            //val argumentsBuffer = StringBuffer()
-            //FunctionArgumentsResolver.resolve(functionParameters).joinTo(argumentsBuffer)
-
             val nullable = TypeUtils.isNullable(functionReturnType)
             val isNativeType = TypeUtils.isNativeType(functionReturnType)
             val isVoidType = TypeUtils.isVoidType(functionReturnType)

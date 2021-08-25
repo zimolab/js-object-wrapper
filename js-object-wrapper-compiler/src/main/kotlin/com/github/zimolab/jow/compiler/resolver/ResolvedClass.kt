@@ -4,6 +4,7 @@ import com.github.zimolab.jow.annotation.obj.JsObjectClass
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 
+@ExperimentalUnsignedTypes
 class ResolvedClass(
     val originDeclaration: KSClassDeclaration,
     val originAnnotation: KSAnnotation,

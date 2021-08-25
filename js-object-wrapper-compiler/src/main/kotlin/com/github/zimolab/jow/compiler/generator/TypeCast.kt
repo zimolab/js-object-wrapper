@@ -582,7 +582,7 @@ class TypeCast private constructor(
                 }
             }
         }
-
+        
         fun createTypeCastFunction(
             functionName: String,
             parameterName: String,
@@ -594,11 +594,24 @@ class TypeCast private constructor(
             return FunSpec.builder(functionName)
                 .addParameter(parameterName, parameterType)
                 .returns(returnType).let {
+                    it.addKdoc("This is an auto-generated type cast function, which is used in the underlying web engine calls.")
+                    it.addKdoc("\n")
                     if (codeBlock != null) {
+                        it.addKdoc("This function has default implementation, you can override it in the subclass and provide your own type conversion logic.")
+                        it.addKdoc("\n")
+                        it.addModifiers(KModifier.OPEN)
                         it.addCode(codeBlock, *args)
                     } else {
+                        it.addKdoc("This is an abstract function please implement it with your own type conversion logic.")
+                        it.addKdoc("\n")
                         it.addModifiers(KModifier.ABSTRACT)
                     }
+                    it.addKdoc("\n")
+                    it.addKdoc("\t($parameterName:%T) -> %T", parameterType, returnType)
+                    it.addKdoc("\n")
+                    it.addKdoc("\n")
+                    it.addKdoc("@param $parameterName %T\n", parameterType)
+                    it.addKdoc("@return %T\n", returnType)
                     it.build()
                 }
         }
