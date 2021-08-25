@@ -1,18 +1,5 @@
 package com.github.zimolab.jow.annotation.obj.typemapping
 
-import com.github.zimolab.jow.annotation.obj.typemapping.TypeCastStrategyConstants.AUTO_DETERMINE
-import com.github.zimolab.jow.annotation.obj.typemapping.TypeCastStrategyConstants.AUTO_GENERATE
-import com.github.zimolab.jow.annotation.obj.typemapping.TypeCastStrategyConstants.NO_CAST
-import com.github.zimolab.jow.annotation.obj.typemapping.TypeCastStrategyConstants.NO_CAST_EXCEPT_BUILTIN
-
-
-object TypeCastStrategyConstants {
-    const val AUTO_DETERMINE = "auto-determine"
-    const val NO_CAST = "no-cast"
-    const val NO_CAST_EXCEPT_BUILTIN = "no-cast-except-builtin"
-    const val AUTO_GENERATE = "auto-gen"
-}
-
 /**
  * 定义了可能的类型转换策略
  * @property name String
@@ -46,6 +33,11 @@ sealed class TypeCastStrategy(val name: String) {
     class UserSpecify(category: String): TypeCastStrategy(category)
 
     companion object {
+        const val AUTO_DETERMINE = "auto-determine"
+        const val NO_CAST = "no-cast"
+        const val NO_CAST_EXCEPT_BUILTIN = "no-cast-except-builtin"
+        const val AUTO_GENERATE = "auto-gen"
+
         fun of(category: String): TypeCastStrategy {
             return when(category) {
                 AUTO_DETERMINE-> AutoDetermine()
