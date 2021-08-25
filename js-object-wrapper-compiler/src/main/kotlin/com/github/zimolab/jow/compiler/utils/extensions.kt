@@ -4,14 +4,14 @@ package com.github.zimolab.jow.compiler
  * 封装了一些在解析注解类时常常用到的功能。
  */
 
+import com.github.zimolab.jow.compiler.asClassName
+import com.github.zimolab.jow.compiler.asTypeName
+import com.github.zimolab.jow.compiler.asTypeVariableName
 import com.google.devtools.ksp.getAllSuperTypes
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.*
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.TypeName
-import com.squareup.kotlinpoet.TypeVariableName
 import java.io.OutputStream
 import java.util.logging.FileHandler
 import java.util.logging.Level
@@ -225,4 +225,20 @@ fun Logger.shutdown() {
         if (it is FileHandler)
             it.close()
     }
+}
+
+val logger = Logger.getLogger(JsObjectWrapperProcessor::class.java.canonicalName)
+
+fun TypeSpec.Builder.findFunction(funcName: String, vararg parameterTypes: TypeName): FunSpec? {
+    val func = this.funSpecs.firstOrNull { it.name ==  funcName} ?: return null
+    if (func.parameters.size != parameterTypes.size)
+        return null
+    logger.debug("findFunction($funcName, ${parameterTypes.joinToString(",")}):")
+    parameterTypes.forEachIndexed { index, typeName ->
+        logger.debug("$typeName == ${func.parameters[index].type}")
+        if(!(typeName == func.parameters[index].type || typeName.copy(nullable = true) == func.parameters[index].type))
+            return null
+    }
+    logger.debug("\n\n")
+    return func
 }

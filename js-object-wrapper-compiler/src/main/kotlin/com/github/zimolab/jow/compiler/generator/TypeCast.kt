@@ -7,6 +7,7 @@ import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.compiler.*
 import com.github.zimolab.jow.compiler.generator.TypeCast.BuiltinTypeCastFunctions.JS_ARRAY_INTERFACE_SETTER_CAST_FUNC
 import com.github.zimolab.jow.compiler.generator.TypeCast.BuiltinTypeCastFunctions.JS_OBJECT_WRAPPER_SETTER_CAST_FUNC
+import com.github.zimolab.jow.compiler.generator.TypeCast.BuiltinTypeCastFunctions.getBuiltinTypeCastFunction
 import com.github.zimolab.jow.compiler.resolver.ResolvedFunction
 import com.github.zimolab.jow.compiler.resolver.ResolvedFunctionParameter
 import com.github.zimolab.jow.compiler.resolver.ResolvedProperty
@@ -28,9 +29,11 @@ enum class TypeCastTarget {
     PROP_SETTER,
     PROP_GETTER,
     FUNC_RETURN,
-    FUNC_ARGUMENT,
+    FUNC_PARAMETER,
 }
 
+
+@ExperimentalUnsignedTypes
 class TypeCast private constructor(
     val typeCastMethod: TypeCastMethod,
     val target: TypeCastTarget,
@@ -67,96 +70,6 @@ class TypeCast private constructor(
                 returnType = JSObject::class.asTypeName().copy(nullable = true),
                 codeBlock = "return arg?.${JsArrayInterface<*>::reference.name}".replace(" ", "·"),
             )
-    }
-
-    companion object {
-        private val logger: Logger = Logger.getLogger(JsObjectWrapperProcessor::class.java.canonicalName)
-
-        /**
-         * 生成规则：
-         *  PROP_SETTER、FUNC_ARGUMENT:  ${prefix}${if(prefix=="") "cast" else "Cast"}${if(nullable) “Nullable” else “” }${TypeName}${suffix}
-         *
-         *  PROP_GETTER、FUNC_RETURN:   ${prefix}${if(prefix=="") "as" else "As"}${if(nullable) “Nullable” else “” }${TypeName}${suffix}
-         *
-         *  其中${TypeName}的生成规则如下：
-         *  1、如类型含有泛型，则${TypeName} = ${simpleName_uid}
-         *  1）simpleName
-         *  2）uid == TypeName.hashCode()
-         *
-         *  2、如类型不含泛型，则${TypeName} = ${simpleName}
-         *
-         *  示例（假定：prefix=“”, suffix=""），
-         *  @JsObjectWrapperProperty(setterTypeCast=AUTO_DETERMINE, getterTypeCast=AUTO_DETERMINE)
-         *  var prop: List<String>
-         *
-         *  以上属性声明声明将生成如下函数声明
-         *  abstract func castList_207086024(arg: List<String>): Ang?
-         *  abstract func asList_207086024(arg: Any?): List<String>
-         *  其中，uid部分（_207086024）可能会因为hashCode()方法的不同的实现而有所差异
-         *
-         * @param target TypeCastTarget
-         * @param targetObj Any
-         * @param prefix String
-         * @param suffix String
-         * @return String
-         */
-        fun generateTypeCastFunctionName(
-            target: TypeCastTarget,
-            targetObj: Any,
-            prefix: String = "",
-            suffix: String = "",
-        ): String {
-            return when (target) {
-                TypeCastTarget.PROP_SETTER -> {
-                    val prop = targetObj as ResolvedProperty
-                    val simpleName = prop.type.simpleName
-                    val nullable = TypeUtils.isNullable(prop.type)
-                    val hasTypeArguments = prop.type.arguments.isNotEmpty()
-                    val uid = if (hasTypeArguments) {
-                        abs(prop.type.asTypeName().hashCode()).toString()
-                    } else {
-                        ""
-                    }
-                    "${prefix}${if (prefix == "") "cast" else "Cast"}${if (nullable) "Nullable" else ""}${simpleName}${if (hasTypeArguments) "_${uid}" else ""}${suffix}"
-                }
-                TypeCastTarget.PROP_GETTER -> {
-                    val prop = targetObj as ResolvedProperty
-                    val simpleName = prop.type.simpleName
-                    val nullable = TypeUtils.isNullable(prop.type)
-                    val hasTypeArguments = prop.type.arguments.isNotEmpty()
-                    val uid = if (hasTypeArguments) {
-                        abs(prop.type.asTypeName().hashCode()).toString()
-                    } else {
-                        ""
-                    }
-                    "${prefix}${if (prefix == "") "as" else "As"}${if (nullable) "Nullable" else ""}${simpleName}${if (hasTypeArguments) "_${uid}" else ""}${suffix}"
-                }
-                TypeCastTarget.FUNC_RETURN -> {
-                    val func = targetObj as ResolvedFunction
-                    val simpleName = func.returnType.simpleName
-                    val nullable = TypeUtils.isNullable(func.returnType)
-                    val hasTypeArguments = func.returnType.arguments.isNotEmpty()
-                    val uid = if (hasTypeArguments) {
-                        abs(func.returnType.asTypeName().hashCode()).toString()
-                    } else {
-                        ""
-                    }
-                    "${prefix}${if (prefix == "") "as" else "As"}${if (nullable) "Nullable" else ""}${simpleName}${if (hasTypeArguments) "_${uid}" else ""}${suffix}"
-                }
-                TypeCastTarget.FUNC_ARGUMENT -> {
-                    val func = targetObj as ResolvedFunction
-                    val simpleName = func.returnType.simpleName
-                    val nullable = TypeUtils.isNullable(func.returnType)
-                    val hasTypeArguments = func.returnType.arguments.isNotEmpty()
-                    val uid = if (hasTypeArguments) {
-                        abs(func.returnType.asTypeName().hashCode()).toString()
-                    } else {
-                        ""
-                    }
-                    "${prefix}${if (prefix == "") "cast" else "Cast"}${if (nullable) "Nullable" else ""}${simpleName}${if (hasTypeArguments) "_${uid}" else ""}${suffix}"
-                }
-            }
-        }
 
         fun getBuiltinTypeCastFunction(type: KSType): FunSpec? {
             return if (TypeUtils.isJsArrayInterfaceType(type))
@@ -166,7 +79,15 @@ class TypeCast private constructor(
             else
                 null
         }
+    }
 
+    companion object {
+        private val logger: Logger = Logger.getLogger(JsObjectWrapperProcessor::class.java.canonicalName)
+
+        val GETTER_CAST_FUNC_PARAM_TYPE = Any::class.asTypeName().copy(nullable = true)
+        val SETTER_CAST_FUNC_RETURN_TYPE = Any::class.asTypeName().copy(nullable = true)
+        val FUNC_RETURN_CAST_FUNC_PARAM_TYPE = Any::class.asTypeName().copy(nullable = true)
+        val FUNC_PARAM_CAST_FUNC_RETURN_TYPE = Any::class.asTypeName().copy(nullable = true)
 
         fun of(target: TypeCastTarget, targetObj: Any, classBuilder: TypeSpec.Builder): TypeCast {
             when (target) {
@@ -184,13 +105,18 @@ class TypeCast private constructor(
                         return typeCast
 
                     if (typeCast.isBuiltinFunction) {
-                        if (classBuilder.funSpecs.firstOrNull { it.name == typeCast.functionName && it.parameters.size == 1 } == null)
+                        if (classBuilder.findFunction(typeCast.functionName, typeCast.functionSpec!!.parameters[0].type) == null) {
                             classBuilder.addFunction(typeCast.functionSpec!!)
+                            logger.debug("为属性\"${prop.simpleName}创建类型转换函数：${typeCast.functionSpec}\"")
+                        }
                         return typeCast
                     }
 
-                    var castFunc =
-                        classBuilder.funSpecs.firstOrNull { it.name == typeCast.functionName && it.parameters.size == 1 }
+                    var castFunc = if (target == TypeCastTarget.PROP_SETTER) {
+                        classBuilder.findFunction(typeCast.functionName, prop.type.asTypeName())
+                    } else {
+                        classBuilder.findFunction(typeCast.functionName, GETTER_CAST_FUNC_PARAM_TYPE)
+                    }
 
                     if (castFunc == null) {
                         castFunc = if (target == TypeCastTarget.PROP_SETTER) {
@@ -198,28 +124,59 @@ class TypeCast private constructor(
                         } else {
                             createGetterCastFunction(typeCast.functionName, "src", prop)
                         }
+                        typeCast.functionSpec = castFunc
                         classBuilder.addFunction(castFunc)
+                        logger.debug("为属性\"${prop.simpleName}创建类型转换函数：${typeCast.functionSpec}\"")
                     }
-
-                    typeCast.functionSpec = castFunc
                     return typeCast
                 }
                 TypeCastTarget.FUNC_RETURN -> {
                     val func = targetObj as ResolvedFunction
                     val typeCast = ofFunctionReturn(func)
-                    if (typeCast.typeCastMethod == TypeCastMethod.NO_CAST || typeCast.functionSpec != null)
+                    if (typeCast.typeCastMethod == TypeCastMethod.NO_CAST)
                         return typeCast
-                    var castFunc =
-                        classBuilder.funSpecs.firstOrNull { it.name == typeCast.functionName && it.parameters.size == 1 }
-                    if (castFunc == null) {
-                        castFunc = createReturnTypeCastFunction(typeCast.functionName, "arg", func)
-                        classBuilder.addFunction(castFunc)
+
+                    if (typeCast.isBuiltinFunction) {
+                        if (classBuilder.findFunction(typeCast.functionName, typeCast.functionSpec!!.parameters[0].type) == null) {
+                            classBuilder.addFunction(typeCast.functionSpec!!)
+                            logger.debug("为函数\"${func.simpleName}的返回值创建类型转换函数：${typeCast.functionSpec}\"")
+                        }
+                        return typeCast
                     }
-                    typeCast.functionSpec = castFunc
+
+
+                    var castFunc = classBuilder.findFunction(typeCast.functionName, FUNC_RETURN_CAST_FUNC_PARAM_TYPE)
+                    if (castFunc == null) {
+                        castFunc = createReturnTypeCastFunction(typeCast.functionName, "src", func)
+                        typeCast.functionSpec = castFunc
+                        classBuilder.addFunction(castFunc)
+                        logger.debug("为函数\"${func.simpleName}的返回值创建类型转换函数：${typeCast.functionSpec}\"")
+                    }
                     return typeCast
                 }
-                TypeCastTarget.FUNC_ARGUMENT -> {
-                    TODO("")
+                TypeCastTarget.FUNC_PARAMETER -> {
+                    val param = targetObj as ResolvedFunctionParameter
+                    val typeCast = ofFunctionParameter(param)
+                    if (typeCast.typeCastMethod == TypeCastMethod.NO_CAST)
+                        return typeCast
+
+                    if (typeCast.isBuiltinFunction) {
+                        if (classBuilder.findFunction(typeCast.functionName, typeCast.functionSpec!!.parameters[0].type) == null) {
+                            classBuilder.addFunction(typeCast.functionSpec!!)
+                            logger.debug("为函数参数\"${param.name}创建类型转换函数：${typeCast.functionSpec}\"")
+                        }
+                        return typeCast
+                    }
+
+                    var castFunc = classBuilder.findFunction(typeCast.functionName, param.type.asTypeName())
+
+                    if (castFunc == null) {
+                        castFunc = createParameterTypeCastFunction(typeCast.functionName, "arg", param)
+                        typeCast.functionSpec = castFunc
+                        classBuilder.addFunction(castFunc)
+                        logger.debug("为函数参数\"${param.name}创建类型转换函数：${typeCast.functionSpec}\"")
+                    }
+                    return typeCast
                 }
             }
         }
@@ -384,8 +341,93 @@ class TypeCast private constructor(
             }
         }
 
-        fun ofFunctionArgument(argument: ResolvedFunctionParameter): TypeCast {
-            TODO()
+        fun ofFunctionParameter(parameter: ResolvedFunctionParameter): TypeCast {
+            val category = parameter.meta.typeCastCategory
+            val nativeType = parameter.meta.isNativeType
+
+            return when (category) {
+                is TypeCastCategory.AutoDetermine -> {
+                    if (nativeType) {
+                        TypeCast(
+                            typeCastMethod = TypeCastMethod.NO_CAST,
+                            target = TypeCastTarget.FUNC_PARAMETER,
+                            functionName = "",
+                            functionSpec = null,
+                            isBuiltinFunction = false
+                        )
+                    } else {
+                        val builtinCastFunc = getBuiltinTypeCastFunction(parameter.type)
+                        if (builtinCastFunc != null) {
+                            TypeCast(
+                                typeCastMethod = TypeCastMethod.CAST_FUNCTION,
+                                target = TypeCastTarget.FUNC_PARAMETER,
+                                functionName = builtinCastFunc.name,
+                                functionSpec = builtinCastFunc,
+                                isBuiltinFunction = true
+                            )
+                        } else {
+                            TypeCast(
+                                typeCastMethod = TypeCastMethod.CAST_FUNCTION,
+                                target = TypeCastTarget.FUNC_PARAMETER,
+                                functionName = generateTypeCastFunctionName(TypeCastTarget.FUNC_PARAMETER, parameter),
+                                functionSpec = null,
+                                isBuiltinFunction = false
+                            )
+                        }
+                    }
+                }
+
+                is TypeCastCategory.NoCast -> {
+                    TypeCast(
+                        typeCastMethod = TypeCastMethod.NO_CAST,
+                        target = TypeCastTarget.FUNC_PARAMETER,
+                        functionName = "",
+                        functionSpec = null,
+                        isBuiltinFunction = false
+                    )
+                }
+
+                is TypeCastCategory.AutoGenerate -> {
+                    TypeCast(
+                        typeCastMethod = TypeCastMethod.CAST_FUNCTION,
+                        target = TypeCastTarget.FUNC_PARAMETER,
+                        functionName = generateTypeCastFunctionName(TypeCastTarget.FUNC_PARAMETER, parameter),
+                        functionSpec = null,
+                        isBuiltinFunction = false
+                    )
+                }
+
+                is TypeCastCategory.NoCastExceptBuiltin -> {
+                    val builtinFunc = getBuiltinTypeCastFunction(parameter.type)
+                    if (builtinFunc == null) {
+                        TypeCast(
+                            typeCastMethod = TypeCastMethod.NO_CAST,
+                            target = TypeCastTarget.FUNC_PARAMETER,
+                            functionName = "",
+                            functionSpec = null,
+                            isBuiltinFunction = false
+                        )
+                    } else {
+                        TypeCast(
+                            typeCastMethod = TypeCastMethod.CAST_FUNCTION,
+                            target = TypeCastTarget.FUNC_PARAMETER,
+                            functionName = builtinFunc.name,
+                            functionSpec = builtinFunc,
+                            isBuiltinFunction = true
+                        )
+                    }
+                }
+
+                is TypeCastCategory.UserSpecify -> {
+                    TypeCast(
+                        typeCastMethod = TypeCastMethod.CAST_FUNCTION,
+                        target = TypeCastTarget.FUNC_PARAMETER,
+                        functionName = category.name,
+                        functionSpec = null,
+                        isBuiltinFunction = false
+                    )
+                }
+            }
         }
 
         fun ofFunctionReturn(func: ResolvedFunction): TypeCast {
@@ -455,6 +497,92 @@ class TypeCast private constructor(
             }
         }
 
+        /**
+         * 生成规则：
+         *  PROP_SETTER、FUNC_ARGUMENT:  ${prefix}${if(prefix=="") "cast" else "Cast"}${if(nullable) “Nullable” else “” }${TypeName}${suffix}
+         *
+         *  PROP_GETTER、FUNC_RETURN:   ${prefix}${if(prefix=="") "as" else "As"}${if(nullable) “Nullable” else “” }${TypeName}${suffix}
+         *
+         *  其中${TypeName}的生成规则如下：
+         *  1、如类型含有泛型，则${TypeName} = ${simpleName_uid}
+         *  1）simpleName
+         *  2）uid == TypeName.hashCode()
+         *
+         *  2、如类型不含泛型，则${TypeName} = ${simpleName}
+         *
+         *  示例（假定：prefix=“”, suffix=""），
+         *  @JsObjectWrapperProperty(setterTypeCast=AUTO_DETERMINE, getterTypeCast=AUTO_DETERMINE)
+         *  var prop: List<String>
+         *
+         *  以上属性声明声明将生成如下函数声明
+         *  abstract func castList_207086024(arg: List<String>): Ang?
+         *  abstract func asList_207086024(arg: Any?): List<String>
+         *  其中，uid部分（_207086024）可能会因为hashCode()方法的不同的实现而有所差异
+         *
+         * @param target TypeCastTarget
+         * @param targetObj Any
+         * @param prefix String
+         * @param suffix String
+         * @return String
+         */
+        fun generateTypeCastFunctionName(
+            target: TypeCastTarget,
+            targetObj: Any,
+            prefix: String = "",
+            suffix: String = "",
+        ): String {
+            return when (target) {
+                TypeCastTarget.PROP_SETTER -> {
+                    val prop = targetObj as ResolvedProperty
+                    val simpleName = prop.type.simpleName
+                    val nullable = TypeUtils.isNullable(prop.type)
+                    val hasTypeArguments = prop.type.arguments.isNotEmpty()
+                    val uid = if (hasTypeArguments) {
+                        abs(prop.type.asTypeName().hashCode()).toString()
+                    } else {
+                        ""
+                    }
+                    "${prefix}${if (prefix == "") "cast" else "Cast"}${if (nullable) "Nullable" else ""}${simpleName}${if (hasTypeArguments) "_${uid}" else ""}${suffix}"
+                }
+                TypeCastTarget.PROP_GETTER -> {
+                    val prop = targetObj as ResolvedProperty
+                    val simpleName = prop.type.simpleName
+                    val nullable = TypeUtils.isNullable(prop.type)
+                    val hasTypeArguments = prop.type.arguments.isNotEmpty()
+                    val uid = if (hasTypeArguments) {
+                        abs(prop.type.asTypeName().hashCode()).toString()
+                    } else {
+                        ""
+                    }
+                    "${prefix}${if (prefix == "") "as" else "As"}${if (nullable) "Nullable" else ""}${simpleName}${if (hasTypeArguments) "_${uid}" else ""}${suffix}"
+                }
+                TypeCastTarget.FUNC_RETURN -> {
+                    val func = targetObj as ResolvedFunction
+                    val simpleName = func.returnType.simpleName
+                    val nullable = TypeUtils.isNullable(func.returnType)
+                    val hasTypeArguments = func.returnType.arguments.isNotEmpty()
+                    val uid = if (hasTypeArguments) {
+                        abs(func.returnType.asTypeName().hashCode()).toString()
+                    } else {
+                        ""
+                    }
+                    "${prefix}${if (prefix == "") "as" else "As"}${if (nullable) "Nullable" else ""}${simpleName}${if (hasTypeArguments) "_${uid}" else ""}${suffix}"
+                }
+                TypeCastTarget.FUNC_PARAMETER -> {
+                    val parameter = targetObj as ResolvedFunctionParameter
+                    val name = parameter.name
+                    val nullable = TypeUtils.isNullable(parameter.type)
+                    val hasTypeArguments = parameter.type.arguments.isNotEmpty()
+                    val uid = if (hasTypeArguments) {
+                        abs(parameter.type.asTypeName().hashCode()).toString()
+                    } else {
+                        ""
+                    }
+                    "${prefix}${if (prefix == "") "cast" else "Cast"}${if (nullable) "Nullable" else ""}${name}${if (hasTypeArguments) "_${uid}" else ""}${suffix}"
+                }
+            }
+        }
+
         fun createTypeCastFunction(
             functionName: String,
             parameterName: String,
@@ -488,7 +616,7 @@ class TypeCast private constructor(
                 funcName,
                 parameterName,
                 property.type.asTypeName(),
-                Any::class.asTypeName().copy(nullable = true),
+                SETTER_CAST_FUNC_RETURN_TYPE,
                 codeBlock,
                 *args
             )
@@ -506,7 +634,7 @@ class TypeCast private constructor(
             return createTypeCastFunction(
                 funcName,
                 parameterName,
-                Any::class.asTypeName().copy(nullable = true),
+                GETTER_CAST_FUNC_PARAM_TYPE,
                 property.type.asTypeName(),
                 codeBlock,
                 *args
@@ -523,25 +651,25 @@ class TypeCast private constructor(
             return createTypeCastFunction(
                 funcName,
                 parameterName,
-                Any::class.asTypeName().copy(nullable = true),
+                FUNC_RETURN_CAST_FUNC_PARAM_TYPE,
                 func.returnType.asTypeName(),
                 codeBlock,
                 *args
             )
         }
 
-        fun createArgumentTypeCastFunction(
+        fun createParameterTypeCastFunction(
             funcName: String,
             parameterName: String,
-            argumentType: TypeName,
+            parameter: ResolvedFunctionParameter,
             codeBlock: String? = null,
             vararg args: Any?
         ): FunSpec {
             return createTypeCastFunction(
                 funcName,
                 parameterName,
-                argumentType,
-                Any::class.asTypeName().copy(nullable = true),
+                parameter.type.asTypeName(),
+                FUNC_PARAM_CAST_FUNC_RETURN_TYPE,
                 codeBlock,
                 *args
             )

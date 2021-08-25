@@ -2,10 +2,13 @@ package com.github.zimolab.jow.compiler.resolver
 
 import com.github.zimolab.jow.annotation.obj.JsObjectProperty
 import com.github.zimolab.jow.compiler.generator.TypeCast
+import com.github.zimolab.jow.compiler.generator.TypeCastTarget
 import com.github.zimolab.jow.compiler.utils.TypeUtils
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
+import com.squareup.kotlinpoet.TypeSpec
 
+@ExperimentalUnsignedTypes
 class ResolvedProperty(
     val declaration: KSPropertyDeclaration,
     val annotation: KSAnnotation?

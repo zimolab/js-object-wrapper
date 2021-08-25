@@ -228,15 +228,7 @@ class JsObjectWrapperClassGenerator(
             val isAnyType = TypeUtils.isAnyType(resolvedProperty.type)
 
             // getter
-            val getterTypeCast = TypeCast.ofGetter(resolvedProperty)
-            if (getterTypeCast.typeCastMethod == TypeCastMethod.CAST_FUNCTION) {
-                val funcName = getterTypeCast.functionName
-                if (classBuilder.funSpecs.firstOrNull { it.name == funcName && it.parameters.count() == 1 } == null) {
-                    classBuilder.addFunction(
-                        TypeCast.createGetterCastFunction(funcName, "arg", resolvedProperty)
-                    )
-                }
-            }
+            val getterTypeCast = TypeCast.of(TypeCastTarget.PROP_GETTER, resolvedProperty, classBuilder)
             val getterBuilder = FunSpec.getterBuilder()
             val getterCodeTemplate = """
                 val ret = ${JsObjectWrapper::source.name}.getMember(%S)
@@ -300,20 +292,7 @@ class JsObjectWrapperClassGenerator(
             //~getter
 
             //setter
-            val setterTypeCast = TypeCast.ofSetter(resolvedProperty)
-            if (setterTypeCast.typeCastMethod == TypeCastMethod.CAST_FUNCTION) {
-                val funcName = setterTypeCast.functionName
-                val builtinFunction = setterTypeCast.functionSpec
-                if (builtinFunction != null) {
-                    if (classBuilder.funSpecs.firstOrNull { it.name == funcName && it.parameters.count() == 1 } == null) {
-                        classBuilder.addFunction(builtinFunction)
-                    }
-                } else {
-                    if (classBuilder.funSpecs.firstOrNull { it.name == funcName && it.parameters.count() == 1 } == null) {
-                        classBuilder.addFunction(TypeCast.createSetterCastFunction(funcName, "arg", resolvedProperty))
-                    }
-                }
-            }
+            val setterTypeCast = TypeCast.of(TypeCastTarget.PROP_SETTER, resolvedProperty, classBuilder)
             val setterParamName = "v"
             if (resolvedProperty.mutable) {
                 val setterBuilder = FunSpec.setterBuilder()
@@ -414,19 +393,8 @@ class JsObjectWrapperClassGenerator(
             val undefinedAsNull = resolvedFunction.meta.undefinedAsNull
 
             // 如果返回值不是支持直接转换的原生类型，则需要添加一个额外的类型转换函数（模板方法），用来对返回值进行转换
-            val returnTypeCast = TypeCast.ofFunctionReturn(resolvedFunction)
+            val returnTypeCast = TypeCast.of(TypeCastTarget.FUNC_RETURN, resolvedFunction, classBuilder)
             val returnTypeCastFunc = returnTypeCast.functionName
-            if (returnTypeCast.typeCastMethod == TypeCastMethod.CAST_FUNCTION) {
-                if (classBuilder.funSpecs.firstOrNull { it.name == returnTypeCastFunc && it.parameters.size == 1 } == null) {
-                    classBuilder.addFunction(
-                        TypeCast.createReturnTypeCastFunction(
-                            returnTypeCastFunc,
-                            "arg",
-                            resolvedFunction
-                        )
-                    )
-                }
-            }
 
             val codeTemplate = """
                 val ret = ${JsObjectWrapper::source.name}.call(%S, %L)
@@ -480,22 +448,5 @@ class JsObjectWrapperClassGenerator(
             return functionBuilder.build()
         }
 
-        private fun createReturnTypeCastor(
-            returnTypeCastor: String?,
-            returnType: KSType,
-            classBuilder: TypeSpec.Builder
-        ) {
-            if (returnTypeCastor == null)
-                return
-            val castor = classBuilder.funSpecs.firstOrNull { it.name == returnTypeCastor }
-            if (castor == null) {
-                val builder = FunSpec
-                    .builder(returnTypeCastor)
-                    .addModifiers(KModifier.ABSTRACT)
-                    .returns(returnType.asTypeName())
-                    .addParameter("originReturn", Any::class.asTypeName())
-                classBuilder.addFunction(builder.build())
-            }
-        }
     }
 }
