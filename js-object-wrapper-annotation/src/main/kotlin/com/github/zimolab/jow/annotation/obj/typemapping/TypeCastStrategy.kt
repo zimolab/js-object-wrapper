@@ -1,9 +1,9 @@
-package com.github.zimolab.jow.annotation.obj.typecast
+package com.github.zimolab.jow.annotation.obj.typemapping
 
-import com.github.zimolab.jow.annotation.obj.typecast.TypeCastStrategyConstants.AUTO_DETERMINE
-import com.github.zimolab.jow.annotation.obj.typecast.TypeCastStrategyConstants.AUTO_GENERATE
-import com.github.zimolab.jow.annotation.obj.typecast.TypeCastStrategyConstants.NO_CAST
-import com.github.zimolab.jow.annotation.obj.typecast.TypeCastStrategyConstants.NO_CAST_EXCEPT_BUILTIN
+import com.github.zimolab.jow.annotation.obj.typemapping.TypeCastStrategyConstants.AUTO_DETERMINE
+import com.github.zimolab.jow.annotation.obj.typemapping.TypeCastStrategyConstants.AUTO_GENERATE
+import com.github.zimolab.jow.annotation.obj.typemapping.TypeCastStrategyConstants.NO_CAST
+import com.github.zimolab.jow.annotation.obj.typemapping.TypeCastStrategyConstants.NO_CAST_EXCEPT_BUILTIN
 
 
 object TypeCastStrategyConstants {

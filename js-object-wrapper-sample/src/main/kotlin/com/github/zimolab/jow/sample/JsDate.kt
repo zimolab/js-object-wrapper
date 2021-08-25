@@ -6,8 +6,8 @@ import com.github.zimolab.jsarray.base.JsArrayInterface
 import com.github.zimolab.jow.annotation.obj.JsObjectFunction
 import com.github.zimolab.jow.annotation.obj.JsObjectParameter
 import com.github.zimolab.jow.annotation.obj.JsObjectProperty
-import com.github.zimolab.jow.annotation.obj.typecast.TypeCastStrategyConstants.AUTO_DETERMINE
-import com.github.zimolab.jow.annotation.obj.typecast.TypeCastStrategyConstants.AUTO_GENERATE
+import com.github.zimolab.jow.annotation.obj.typemapping.TypeCastStrategyConstants.AUTO_DETERMINE
+import com.github.zimolab.jow.annotation.obj.typemapping.TypeCastStrategyConstants.AUTO_GENERATE
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.array.JsObjectWrapperArray
 import netscape.javascript.JSObject

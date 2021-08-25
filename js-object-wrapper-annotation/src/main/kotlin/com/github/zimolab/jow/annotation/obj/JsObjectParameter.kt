@@ -1,6 +1,6 @@
 package com.github.zimolab.jow.annotation.obj
 
-import com.github.zimolab.jow.annotation.obj.typecast.TypeCastStrategyConstants.NO_CAST_EXCEPT_BUILTIN
+import com.github.zimolab.jow.annotation.obj.typemapping.TypeCastStrategyConstants.NO_CAST_EXCEPT_BUILTIN
 
 /**
  * @property typeCast String

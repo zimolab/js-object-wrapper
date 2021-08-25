@@ -2,7 +2,7 @@ package com.github.zimolab.jow.compiler.generator
 
 import com.github.zimolab.jow.annotation.obj.JsObjectFunction
 import com.github.zimolab.jow.annotation.obj.JsObjectProperty
-import com.github.zimolab.jow.annotation.obj.typecast.*
+import com.github.zimolab.jow.annotation.obj.typemapping.*
 import com.github.zimolab.jow.array.JsObjectWrapper
 import com.github.zimolab.jow.compiler.*
 import com.github.zimolab.jow.compiler.generator.TypeCast.BuiltinTypeCastFunctions.getBuiltinTypeCastFunction
