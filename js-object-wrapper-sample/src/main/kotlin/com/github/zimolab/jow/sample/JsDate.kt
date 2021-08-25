@@ -24,7 +24,7 @@ interface JsDate: JsObjectWrapper {
     var field6: JsObjectWrapper?
     var field7: JsArrayInterface<Any?>?
     var field8: Any?
-    @JsObjectProperty(getterTypeCast = AUTO_DETERMINE)
+    @JsObjectProperty(getterTypeMappingStrategy = AUTO_DETERMINE)
     var field9: List<String>
     var field10: JsArray<String>
     var field12: Float
@@ -38,11 +38,11 @@ interface JsDate: JsObjectWrapper {
 
     @JsObjectFunction(undefinedAsNull = true)
     fun test1(): Unit
-    @JsObjectFunction(returnTypeCast = "__asJsDate__")
+    @JsObjectFunction(returnTypeMappingStrategy = "__asJsDate__")
     //fun test2(a: JsDateTime, b: JsDateTimeImp, c: Any, d: JsDate, vararg dates: JsDate): JsDateTimeImp
     fun test3(a: Int, b: JSObject?, c: Any, d: JsDate?, vararg dates: JsDate?)
     fun test4(a: Int, b: JsArray<Any?>, d: JsObjectWrapperArray<JsDate>?, vararg dates: Int)
-    fun test5(@JsObjectParameter(AUTO_GENERATE) b: JsArray<Any?>?, d: JsObjectWrapperArray<JsDate>?, @JsObjectParameter(typeCast = AUTO_DETERMINE) vararg dates: Date?)
+    fun test5(@JsObjectParameter(AUTO_GENERATE) b: JsArray<Any?>?, d: JsObjectWrapperArray<JsDate>?, @JsObjectParameter(typeMappingStrategy = AUTO_DETERMINE) vararg dates: Date?)
     fun test6(b: JsArray<Any?>?, d: JsObjectWrapperArray<JsDate>?, vararg dates: Int?)
     fun test7(vararg dates: JSObject)
     fun test8(vararg dates: JsDate)

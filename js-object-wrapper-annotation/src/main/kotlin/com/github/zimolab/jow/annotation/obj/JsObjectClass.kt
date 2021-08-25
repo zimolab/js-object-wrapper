@@ -1,11 +1,13 @@
 package com.github.zimolab.jow.annotation.obj
 
 /**
- * @property outputClassName String
- * @property outputFilename String
- * @property outputFileEncoding String
- * @property primaryConstructor String
- * @property classDoc String
+ * 该注解应用于抽象类（尚未实现处理逻辑）或接口，用于生成Javascript对象的Kotlin包装类，减少重复性代码的编写。
+ *
+ * @property outputClassName String 生成的包装类名称
+ * @property outputFilename String 生成的文件名
+ * @property outputFileEncoding String 生成文件的编码字符集
+ * @property primaryConstructor String 生成的主构造函数的类型
+ * @property classDoc String 类文档（注释）
  * @constructor
  */
 @Target(AnnotationTarget.CLASS)

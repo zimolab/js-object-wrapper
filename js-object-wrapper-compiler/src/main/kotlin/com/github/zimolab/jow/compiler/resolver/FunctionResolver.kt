@@ -67,9 +67,9 @@ class FunctionResolver(
     }
 
     fun resolveReturnTypeCastCategory(): TypeMappingStrategy {
-        val category = resolveAnnotationArgument(JsObjectFunction::returnTypeCast.name, JsObjectFunction.DEFAULT_RETURN_TYPE_CAST_STRATEGY)
+        val category = resolveAnnotationArgument(JsObjectFunction::returnTypeMappingStrategy.name, JsObjectFunction.DEFAULT_RETURN_TYPE_MAPPING_STRATEGY)
         category.ifEmpty {
-            AnnotationProcessingError("@${JsObjectFunction::class.simpleName}注解的${JsObjectFunction::returnTypeCast.name}参数不可为空").let {
+            AnnotationProcessingError("@${JsObjectFunction::class.simpleName}注解的${JsObjectFunction::returnTypeMappingStrategy.name}参数不可为空").let {
                 logger.error(it, throws = false)
                 throw it
             }

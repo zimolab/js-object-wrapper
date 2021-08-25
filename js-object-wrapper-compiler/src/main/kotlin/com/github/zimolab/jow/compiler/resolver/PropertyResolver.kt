@@ -60,10 +60,10 @@ class PropertyResolver(
 
     fun resolveGetterTypeCastCategory(): TypeMappingStrategy {
         val category =
-            resolveAnnotationArgument(JsObjectProperty::getterTypeCast.name, JsObjectProperty.DEFAULT_TYPE_CAST_STRATEGY)
+            resolveAnnotationArgument(JsObjectProperty::getterTypeMappingStrategy.name, JsObjectProperty.DEFAULT_TYPE_MAPPING_STRATEGY)
         category.ifEmpty {
             AnnotationProcessingError(
-                "@${JsObjectProperty::class.simpleName}注解的${JsObjectProperty::getterTypeCast.name}参数不可为空"
+                "@${JsObjectProperty::class.simpleName}注解的${JsObjectProperty::getterTypeMappingStrategy.name}参数不可为空"
             ).let {
                 logger.error(it)
             }
@@ -73,10 +73,10 @@ class PropertyResolver(
 
     fun resolveSetterTypeCastCategory(): TypeMappingStrategy {
         val category =
-            resolveAnnotationArgument(JsObjectProperty::setterTypeCast.name, JsObjectProperty.DEFAULT_TYPE_CAST_STRATEGY)
+            resolveAnnotationArgument(JsObjectProperty::setterTypeMappingStrategy.name, JsObjectProperty.DEFAULT_TYPE_MAPPING_STRATEGY)
         category.ifEmpty {
             AnnotationProcessingError(
-                "@${JsObjectProperty::class.simpleName}注解的${JsObjectProperty::setterTypeCast.name}参数不可为空"
+                "@${JsObjectProperty::class.simpleName}注解的${JsObjectProperty::setterTypeMappingStrategy.name}参数不可为空"
             ).let {
                 logger.error(it)
             }

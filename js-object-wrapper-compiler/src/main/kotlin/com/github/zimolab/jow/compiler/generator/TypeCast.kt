@@ -322,7 +322,7 @@ class TypeCast private constructor(
                     )
                 }
                 is TypeMappingStrategy.NoMappingExceptBuiltin -> {
-                    AnnotationProcessingError("${category.name}不适用于${JsObjectProperty::getterTypeCast.name}参数").let {
+                    AnnotationProcessingError("${category.name}不适用于${JsObjectProperty::getterTypeMappingStrategy.name}参数").let {
                         logger.error(it, throws = false)
                         throw it
                     }
@@ -479,7 +479,7 @@ class TypeCast private constructor(
                     )
                 }
                 is TypeMappingStrategy.NoMappingExceptBuiltin -> {
-                    AnnotationProcessingError("${category.name}不适用于${JsObjectFunction::returnTypeCast.name}参数").let {
+                    AnnotationProcessingError("${category.name}不适用于${JsObjectFunction::returnTypeMappingStrategy.name}参数").let {
                         logger.error(it, throws = false)
                         throw it
                     }

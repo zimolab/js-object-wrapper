@@ -43,9 +43,9 @@ class FunctionParameterResolver(
     }
 
     fun resolveTypeCastCategory(): TypeMappingStrategy {
-        val category = resolveAnnotationArgument(JsObjectParameter::typeCast.name, JsObjectParameter.DEFAULT_TYPE_CAST_STRATEGY)
+        val category = resolveAnnotationArgument(JsObjectParameter::typeMappingStrategy.name, JsObjectParameter.DEFAULT_TYPE_MAPPING_STRATEGY)
         category.ifEmpty {
-            AnnotationProcessingError("@${JsObjectParameter::class.simpleName}注解的的${JsObjectParameter::typeCast.name}参数不可为空").let {
+            AnnotationProcessingError("@${JsObjectParameter::class.simpleName}注解的的${JsObjectParameter::typeMappingStrategy.name}参数不可为空").let {
                 logger.error(it, throws = false)
                 throw it
             }
