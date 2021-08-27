@@ -1,6 +1,6 @@
-package com.github.zimolab.jow.annotation.obj
+package com.github.zimolab.jow.annotation
 
-import com.github.zimolab.jow.annotation.obj.typemapping.TypeMappingStrategy.Companion.AUTO_DETERMINE
+import com.github.zimolab.jow.annotation.typemapping.TypeMappingStrategy.Companion.AUTO_DETERMINE
 
 /**
  * 该注解应用于抽象属性，被注解的属性对应Javascript对象中的一个属性（字段）。

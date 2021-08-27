@@ -1,6 +1,6 @@
-package com.github.zimolab.jow.annotation.obj
+package com.github.zimolab.jow.annotation
 
-import com.github.zimolab.jow.annotation.obj.typemapping.TypeMappingStrategy.Companion.NO_MAPPING_EXCEPT_BUILTIN
+import com.github.zimolab.jow.annotation.typemapping.TypeMappingStrategy.Companion.NO_MAPPING_EXCEPT_BUILTIN
 
 /**
  * 该注解应用于函数参数，主要作用在于为函数参数指定类型映射策略

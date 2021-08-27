@@ -1,4 +1,4 @@
-package com.github.zimolab.jow.annotation.obj
+package com.github.zimolab.jow.annotation
 
 /**
  * 该注解应用于抽象类（尚未实现处理逻辑）或接口，用于生成Javascript对象的Kotlin包装类，减少重复性代码的编写。

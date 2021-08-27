@@ -1,7 +1,7 @@
 package com.github.zimolab.jow.compiler.resolve
 
-import com.github.zimolab.jow.annotation.obj.JsObjectParameter
-import com.github.zimolab.jow.annotation.obj.typemapping.TypeMappingStrategy
+import com.github.zimolab.jow.annotation.JsObjectParameter
+import com.github.zimolab.jow.annotation.typemapping.TypeMappingStrategy
 import com.github.zimolab.jow.compiler.AnnotationProcessingError
 import com.github.zimolab.jow.compiler.JsObjectWrapperProcessor
 import com.github.zimolab.jow.compiler.error

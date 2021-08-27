@@ -1,6 +1,6 @@
 package com.github.zimolab.jow.compiler.resolve
 
-import com.github.zimolab.jow.annotation.obj.JsObjectProperty
+import com.github.zimolab.jow.annotation.JsObjectProperty
 import com.github.zimolab.jow.compiler.utils.TypeUtils
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration

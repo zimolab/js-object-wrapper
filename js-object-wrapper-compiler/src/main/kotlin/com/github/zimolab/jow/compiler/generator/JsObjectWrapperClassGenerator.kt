@@ -1,6 +1,6 @@
 package com.github.zimolab.jow.compiler.generator
 
-import com.github.zimolab.jow.annotation.obj.JsObjectClass
+import com.github.zimolab.jow.annotation.JsObjectClass
 import com.github.zimolab.jow.core.JsObjectWrapper
 import com.github.zimolab.jow.compiler.*
 import com.github.zimolab.jow.compiler.resolve.ResolvedClass

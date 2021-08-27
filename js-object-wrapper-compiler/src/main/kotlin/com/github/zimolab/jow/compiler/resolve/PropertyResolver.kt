@@ -1,7 +1,7 @@
 package com.github.zimolab.jow.compiler.resolve
 
-import com.github.zimolab.jow.annotation.obj.JsObjectProperty
-import com.github.zimolab.jow.annotation.obj.typemapping.TypeMappingStrategy
+import com.github.zimolab.jow.annotation.JsObjectProperty
+import com.github.zimolab.jow.annotation.typemapping.TypeMappingStrategy
 import com.github.zimolab.jow.compiler.*
 import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.symbol.KSAnnotation

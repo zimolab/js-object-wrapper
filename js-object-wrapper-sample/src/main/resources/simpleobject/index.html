@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <script src="Point.js"></script>
+    <script src="Line.js"></script>
+</head>
+<body>
+<script>
+    let p1 = new Point(0, 0)
+    let p2 = new Point(3, 4)
+    let line = new Line(p1, p2)
+    console.log(p1, p1.toString())
+    console.log(p2, p2.toString())
+    console.log(line, line.toString())
+    console.log(line.length())
+    console.log(line.contains({x:0, y:0}))
+    console.log(line.contains({x:3, y:4}))
+</script>
+</body>
+</html>

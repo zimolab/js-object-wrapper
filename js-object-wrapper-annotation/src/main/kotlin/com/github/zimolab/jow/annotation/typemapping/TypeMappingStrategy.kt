@@ -1,4 +1,4 @@
-package com.github.zimolab.jow.annotation.obj.typemapping
+package com.github.zimolab.jow.annotation.typemapping
 
 /**
  * 定义了可能的类型映射策略
@@ -40,10 +40,10 @@ sealed class TypeMappingStrategy(val name: String) {
 
         fun of(category: String): TypeMappingStrategy {
             return when(category) {
-                AUTO_DETERMINE-> AutoDetermine()
-                NO_MAPPING-> NoMapping()
-                NO_MAPPING_EXCEPT_BUILTIN-> NoMappingExceptBuiltin()
-                AUTO_GENERATE-> AutoGenerate()
+                AUTO_DETERMINE -> AutoDetermine()
+                NO_MAPPING -> NoMapping()
+                NO_MAPPING_EXCEPT_BUILTIN -> NoMappingExceptBuiltin()
+                AUTO_GENERATE -> AutoGenerate()
                 else-> UserSpecify(category)
             }
         }

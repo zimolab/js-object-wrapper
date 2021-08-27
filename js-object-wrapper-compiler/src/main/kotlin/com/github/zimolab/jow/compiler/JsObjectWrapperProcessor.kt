@@ -1,8 +1,8 @@
 package com.github.zimolab.jow.compiler
 
-import com.github.zimolab.jow.annotation.obj.JsObjectClass
-import com.github.zimolab.jow.annotation.obj.JsObjectFunction
-import com.github.zimolab.jow.annotation.obj.JsObjectProperty
+import com.github.zimolab.jow.annotation.JsObjectClass
+import com.github.zimolab.jow.annotation.JsObjectFunction
+import com.github.zimolab.jow.annotation.JsObjectProperty
 import com.github.zimolab.jow.core.JsObjectWrapper
 import com.github.zimolab.jow.compiler.generator.JsObjectWrapperClassGenerator
 import com.github.zimolab.jow.compiler.resolve.ResolvedClass
@@ -22,16 +22,17 @@ import java.time.LocalDateTime.now
 import java.util.logging.FileHandler
 import java.util.logging.LogManager
 import java.util.logging.Logger
+import kotlin.io.path.Path
 
 @ExperimentalUnsignedTypes
 class JsObjectWrapperProcessor(
-    val options: Map<String, String>,
-    val kotlinVersion: KotlinVersion,
-    val codeGenerator: CodeGenerator,
+    private val options: Map<String, String>,
+    private val kotlinVersion: KotlinVersion,
+    private val codeGenerator: CodeGenerator,
 ) : SymbolProcessor {
 
     companion object {
-        val DEFAULT_LOG_FILE = Path.of(System.getProperty("user.home"), ".js-object-wrapper", "ksp").toAbsolutePath()
+        val DEFAULT_LOG_FILE = Path(System.getProperty("user.home"), ".js-object-wrapper", "ksp").toAbsolutePath()
     }
 
     private val logger: Logger
